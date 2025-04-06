@@ -21,7 +21,7 @@ const ngmayAudio = new Audio('audio/NGMAY.mp3');
 const lblhnkgAudio = new Audio('audio/LBLHNKG.mp3');
 
 // Socket.IO 連線
-const socket = io('https://your-glitch-project.glitch.me'); // 替換為你的 Glitch URL
+const socket = io('https://your-glitch-project.glitch.me'); // 請替換為你的 Glitch URL
 let currentUser = null;
 let currentRoomId = null;
 
@@ -215,7 +215,8 @@ function updateSelectedList() {
         nameSpan.style.backgroundImage = `url('images/${String(index + 1).padStart(3, '0')}.png')`;
         nameSpan.addEventListener('click', () => {
             if (index === 31) ngmayAudio.play().catch(error => console.error('錯誤:', error));
-            selectedSpirits = selectedSpirits.filter(i => i !== index;\n            updateSelectedList();
+            selectedSpirits = selectedSpirits.filter(i => i !== index);
+            updateSelectedList();
         });
         itemDiv.appendChild(nameSpan);
 
@@ -708,7 +709,7 @@ function startBetPhase(betTime, spirits) {
     actions.innerHTML = '';
     spirits.forEach((spirit, i) => {
         const div = document.createElement('div');
-        div.innerHTML = `${spirit.name} (賠率: ${calculateOdds(spirit.bets, spirits))}`;
+        div.innerHTML = `${spirit.name} (賠率: ${calculateOdds(spirit.bets, spirits)})`;
         const input = document.createElement('input');
         input.type = 'number';
         input.min = '0';
@@ -756,10 +757,11 @@ async function startGamePhase(spirits) {
     const actions = document.getElementById('player-actions');
     actions.innerHTML = '';
 
-    for (let spirit of spirits) {
+    for (let i = 0; i < spirits.length; i++) {
+        const spiritDiv = document.getElementById(`spirit-${i}`);
         if (spiritDiv.dataset.props) {
-            spirit.props = JSON.parse(spiritDiv.dataset.props || '[]');
-            shuffleArray(spirit.props);
+            spirits[i].props = JSON.parse(spiritDiv.dataset.props || '[]');
+            shuffleArray(spirits[i].props);
         }
     }
 
