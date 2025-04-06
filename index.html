@@ -64,27 +64,29 @@
         <button id="back-to-menu-from-author">回到目錄</button>
     </div>
 
-    <!-- 登入畫面 -->
-    <div id="login-page" class="container" style="display: none;">
-        <h1>登入</h1>
-        <p style="color: red;">密碼請設置非常用密碼</p>
+<div id="login-page" style="display: none;">
+    <div class="login-header">
+        <button id="back-to-menu-from-login">返回</button>
+        <h2>登入</h2>
+    </div>
+    <div class="login-form">
         <input type="text" id="login-username" placeholder="帳號">
         <input type="password" id="login-password" placeholder="密碼">
         <button id="login-submit">登入</button>
-        <button id="show-register">註冊帳號</button>
+        <button id="show-register">註冊</button>
     </div>
+</div>
 
-    <!-- 註冊畫面 -->
-    <div id="register-page" class="container" style="display: none;">
-        <h1>註冊帳號</h1>
-        <input type="text" id="register-username" placeholder="帳號名（可中文）">
+<div id="register-page" style="display: none;">
+    <h2>註冊</h2>
+    <div class="register-form">
+        <input type="text" id="register-username" placeholder="帳號">
         <input type="password" id="register-password" placeholder="密碼">
         <input type="password" id="register-confirm-password" placeholder="確認密碼">
-        <div>
-            <button id="back-to-login">返回</button>
-            <button id="register-submit">確認註冊</button>
-        </div>
+        <button id="register-submit">註冊</button>
+        <button id="back-to-login">返回登入</button>
     </div>
+</div>
 
     <!-- 鬥靈大廳 -->
     <div id="lobby-page" class="container" style="display: none;">
