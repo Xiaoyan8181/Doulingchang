@@ -1,0 +1,299 @@
+body {
+    font-family: Arial, sans-serif;
+    background-color: #333;
+    color: #fff;
+    margin: 0;
+    padding: 20px;
+}
+
+.container {
+    text-align: center;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.button-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+}
+
+button {
+    padding: 10px 20px;
+    margin: 5px;
+    font-size: 16px;
+    cursor: pointer;
+    background-color: #555;
+    color: #fff;
+    border: none;
+    border-radius: 5px;
+}
+
+button:hover {
+    background-color: #777;
+}
+
+#selection {
+    transform: scale(0.8);
+    transform-origin: top center;
+    max-width: 960px;
+}
+
+#spirit-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: center;
+}
+
+.spirit {
+    padding: 8px;
+    width: 80px;
+    height: 80px;
+    border: 1px solid #ccc;
+    cursor: pointer;
+    text-align: center;
+    background-size: cover;
+    background-position: center;
+    color: white;
+    text-shadow: 1px 1px 2px black;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+}
+
+.spirit.epic {
+    border-color: gold;
+}
+
+.spirit.rare {
+    border-color: purple;
+}
+
+.spirit.common {
+    border-color: blue;
+}
+
+#selected-spirits {
+    margin-top: 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+#selected-list {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 16px;
+    width: 100%;
+    max-width: 960px;
+}
+
+.selected-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin: 8px 0;
+    min-width: 200px;
+}
+
+.selected-item .spirit {
+    margin-bottom: 8px;
+    cursor: pointer;
+    width: 64px;
+    height: 64px;
+}
+
+.prop-row {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    margin: 4px 0;
+}
+
+.input-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.prop-input {
+    width: 32px;
+    padding: 1.6px;
+}
+
+.prop-label {
+    font-size: 9.6px;
+    margin-top: 1.6px;
+}
+
+.result-table {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    margin: 20px 0;
+}
+
+.result-row {
+    display: flex;
+    align-items: center;
+    width: 600px;
+    padding: 10px;
+    background-color: #444;
+    border: 1px solid #666;
+    border-radius: 5px;
+}
+
+.result-row .spirit {
+    width: 60px;
+    height: 60px;
+    padding: 5px;
+    background-size: cover;
+    background-position: center;
+    color: white;
+    text-shadow: 1px 1px 2px black;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.result-row .win-rate-bar-container {
+    flex-grow: 1;
+    height: 20px;
+    background-color: transparent;
+    margin-left: 10px;
+    border-radius: 5px;
+    overflow: hidden;
+}
+
+.result-row .win-rate-bar {
+    height: 100%;
+    background-color: #4caf50;
+    transition: width 0.3s ease-in-out;
+}
+
+.result-row .win-rate-text {
+    margin-left: 10px;
+    font-size: 16px;
+    flex-shrink: 0;
+    min-width: 150px;
+}
+
+.result-row .props-text {
+    margin-left: 10px;
+    font-size: 14px;
+    flex-shrink: 0;
+    max-width: 200px;
+    white-space: normal; /* 允許換行 */
+    line-height: 1.5; /* 行高，控制間距 */
+    text-align: left; /* 左對齊 */
+}
+
+.result-row .props-text .positive {
+    color: #4caf50; /* 綠色，正面道具 */
+}
+
+.result-row .props-text .negative {
+    color: #f44336; /* 紅色，負面道具 */
+}
+
+#settings-page {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+}
+
+#settings-page label {
+    font-size: 18px;
+}
+
+#settings-page input {
+    padding: 5px;
+    font-size: 16px;
+    width: 150px;
+}
+
+.sample-size-text {
+    font-size: 14px;
+    color: #ccc;
+    margin-top: -10px;
+}
+
+#custom-spirit-form {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    align-items: center;
+}
+
+#custom-spirit-form input {
+    padding: 5px;
+    font-size: 14px;
+    width: 80px;
+}
+
+#custom-spirit-form input[name="spirit-name"] {
+    width: 120px;
+}
+
+#custom-spirit-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    align-items: center;
+}
+
+.custom-spirit-entry {
+    display: flex;
+    justify-content: space-between;
+    width: 400px;
+    padding: 10px;
+    background-color: #444;
+    border: 1px solid #666;
+    border-radius: 5px;
+}
+
+.custom-spirit-entry button {
+    padding: 5px 10px;
+    font-size: 12px;
+}
+
+.spirit.custom {
+    border-color: black !important;
+}
+
+.menu-image {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 20px;
+    height: auto;
+    cursor: pointer;
+}
+
+#calculation-page {
+    transform: scale(0.8);
+    transform-origin: top center;
+    max-width: 960px;
+}
+
+#calculation-spirits {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 16px;
+    width: 100%;
+    max-width: 960px;
+    margin: 20px auto;
+}
+
+#progress-text {
+    font-size: 16px;
+    margin-top: 20px;
+}
