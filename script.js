@@ -701,8 +701,16 @@ function enterRoom(roomId) {
     
     // 從伺服器獲取房間資訊並更新玩家列表
     socket.emit('getRoomInfo', roomId, (room) => {
-        document.getElementById('start-game').style.display = room.owner === currentUser ? 'block' : 'none';
-        updatePlayerList(room.players);
+        if (room) {
+            document.getElementById('start-game').style.display = room.owner === currentUser ? 'block' : 'none';
+            updatePlayerList(room.players || []);
+        } else {
+            alert('房間不存在！');
+            document.getElementById('room-page').style.display = 'none';
+            document.getElementById('lobby-page').style.display = 'block';
+            currentRoomId = null;
+            loadRoomList();
+        }
     });
 }
 
@@ -710,10 +718,17 @@ function enterRoom(roomId) {
 function updatePlayerList(players) {
     const playerList = document.getElementById('player-list');
     playerList.innerHTML = '<h3>玩家列表</h3>';
+    if (!players || players.length === 0) {
+        const noPlayersDiv = document.createElement('div');
+        noPlayersDiv.classList.add('player-item');
+        noPlayersDiv.textContent = '無玩家';
+        playerList.appendChild(noPlayersDiv);
+        return;
+    }
     players.forEach(player => {
         const playerDiv = document.createElement('div');
         playerDiv.classList.add('player-item');
-        playerDiv.textContent = player.username;
+        playerDiv.textContent = player.username || '未知玩家';
         playerList.appendChild(playerDiv);
     });
 }
