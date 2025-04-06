@@ -112,11 +112,12 @@ io.on('connection', (socket) => {
 
     // 離開房間
     socket.on('leaveRoom', ({ roomId, username }) => {
-        const room = rooms.find(r => r.id === roomId);
-        if (room) {
+        const roomIndex = rooms.findIndex(r => r.id === roomId);
+        if (roomIndex !== -1) {
+            const room = rooms[roomIndex];
             if (room.owner === username) {
                 // 房主退出，關閉房間
-                rooms = rooms.filter(r => r.id !== roomId);
+                rooms.splice(roomIndex, 1); // 直接移除房間
                 io.to(roomId).emit('roomClosed', roomId);
             } else {
                 // 非房主退出，移除該玩家
@@ -202,11 +203,11 @@ io.on('connection', (socket) => {
     // 斷線處理
     socket.on('disconnect', () => {
         console.log('用戶已斷線');
-        rooms.forEach(room => {
+        rooms.forEach((room, index) => {
             const player = room.players.find(p => p.username === socket.username);
             if (player) {
                 if (room.owner === socket.username) {
-                    rooms = rooms.filter(r => r.id !== room.id);
+                    rooms.splice(index, 1);
                     io.to(room.id).emit('roomClosed', room.id);
                 } else {
                     room.players = room.players.filter(p => p.username !== socket.username);
