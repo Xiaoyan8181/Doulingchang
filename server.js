@@ -5,9 +5,14 @@ const fs = require('fs');
 const path = require('path');
 const app = express();
 const server = http.createServer(app);
-const io = new Server(server);
+const io = new Server(server, {
+    cors: {
+        origin: "https://xiaoyan8181.github.io",
+        methods: ["GET", "POST"]
+    }
+});
 
-const DATA_FILE = path.join(__dirname, '.data', 'users.json');
+const DATA_FILE = path.join('/tmp', 'users.json'); // 修改路徑為 /tmp/users.json
 let users = {};
 let rooms = {};
 let playerCoins = {};
