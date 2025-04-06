@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <title>鬥靈場侍靈勝率計算器</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    
+    <!-- 目錄介面 -->
+    <div id="menu" class="container">
+        <h1>鬥靈場侍靈勝率計算器</h1>
+        <div class="button-container">
+            <button id="start">開始使用</button>
+            <button id="instructions">使用說明</button>
+            <button id="author">作者</button>
+            <button id="settings">設定</button>
+            <button id="exit">離開</button>
+        </div>
+        <img id="rjjdc-image" src="images/RJJDC.png" alt="RJJDC" class="menu-image">
+    </div>
+
+    <!-- 選擇介面 -->
+    <div id="selection" class="container" style="display: none;">
+        <h1>選擇侍靈（最多4個）</h1>
+        <div id="spirit-list"></div>
+        <div id="selected-spirits">
+            <h2>已選擇的侍靈</h2>
+            <div id="selected-list"></div>
+            <button id="start-calculation">開始計算</button>
+            <button id="back-to-menu-from-selection">回到目錄</button>
+        </div>
+    </div>
+
+    <!-- 計算頁面 -->
+    <div id="calculation-page" class="container" style="display: none;">
+        <h1>計算中</h1>
+        <div id="calculation-spirits"></div>
+        <p id="progress-text">計算進度：0%</p>
+    </div>
+
+    <!-- 設定介面 -->
+    <div id="settings-page" class="container" style="display: none;">
+        <h1>設定</h1>
+        <label for="sample-size">樣本數：</label>
+        <input type="number" id="sample-size" min="1000" step="1000" value="100000">
+        <button id="save-settings">保存並返回</button>
+        <button id="add-custom-spirit">新增自訂侍靈</button>
+        <div id="custom-spirit-form" style="display: none; margin-top: 20px;"></div>
+        <div id="custom-spirit-list" style="margin-top: 20px;"></div>
+    </div>
+
+    <!-- 使用說明頁面 -->
+    <div id="instructions-page" class="container" style="display: none;">
+        <h1>使用說明</h1>
+        <p>選擇至多4個侍靈，然後每個侍靈填入6種道具的數值，計算勝率。</p>
+        <button id="back-to-menu-from-instructions">回到目錄</button>
+    </div>
+
+    <!-- 作者頁面 -->
+    <div id="author-page" class="container" style="display: none;">
+        <h1>作者</h1>
+        <p>作者：黑鷺鷺</p>
+        <button id="back-to-menu-from-author">回到目錄</button>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
