@@ -21,7 +21,7 @@ const ngmayAudio = new Audio('audio/NGMAY.mp3');
 const lblhnkgAudio = new Audio('audio/LBLHNKG.mp3');
 
 // Socket.IO 連線
-const socket = io('https://your-glitch-project.glitch.me'); // 請替換為你的 Glitch URL
+const socket = io('https://doulingchang.onrender.com'); // 請替換為你的 Glitch URL
 let currentUser = null;
 let currentRoomId = null;
 
