@@ -21,9 +21,14 @@ const ngmayAudio = new Audio('audio/NGMAY.mp3');
 const lblhnkgAudio = new Audio('audio/LBLHNKG.mp3');
 
 // Socket.IO 連線
-const socket = io('https://your-glitch-project.glitch.me'); // 請替換為你的 Glitch URL
+const socket = io('https://doulingchang.onrender.com');
 let currentUser = null;
 let currentRoomId = null;
+let currentCoins = 0; // 新增：儲存當前鬥靈幣數
+
+// 新增：每日簽到相關變數
+const DAILY_REWARD = 1000000; // 每日簽到獎勵 1000000 鬥靈幣
+let lastCheckIn = localStorage.getItem('lastCheckIn') || null; // 儲存上次簽到時間
 
 // 目錄按鈕事件
 document.getElementById('start').addEventListener('click', () => {
@@ -73,6 +78,12 @@ document.getElementById('back-to-menu-from-instructions').addEventListener('clic
 
 document.getElementById('back-to-menu-from-author').addEventListener('click', () => {
     document.getElementById('author-page').style.display = 'none';
+    document.getElementById('menu').style.display = 'block';
+});
+
+// 新增：登入頁面的返回按鈕事件
+document.getElementById('back-to-menu-from-login').addEventListener('click', () => {
+    document.getElementById('login-page').style.display = 'none';
     document.getElementById('menu').style.display = 'block';
 });
 
@@ -481,6 +492,65 @@ function displayResults(wins, totalSimulations, props) {
     document.body.appendChild(resultDiv);
 }
 
+// 新增：檢查是否可以簽到
+function canCheckIn() {
+    if (!lastCheckIn) return true;
+    const last = new Date(parseInt(lastCheckIn));
+    const now = new Date();
+    const lastMidnight = new Date(last);
+    lastMidnight.setHours(0, 0, 0, 0);
+    const todayMidnight = new Date(now);
+    todayMidnight.setHours(0, 0, 0, 0);
+    return todayMidnight.getTime() > lastMidnight.getTime();
+}
+
+// 新增：更新鬥靈幣顯示
+function updateCoinsDisplay() {
+    const coinsDisplay = document.getElementById('coins-display');
+    if (coinsDisplay) {
+        coinsDisplay.textContent = `鬥靈幣: ${currentCoins}`;
+    }
+}
+
+// 新增：初始化大廳頁面（顯示鬥靈幣和每日簽到）
+function initLobbyPage() {
+    const lobbyHeader = document.createElement('div');
+    lobbyHeader.classList.add('lobby-header');
+    lobbyHeader.innerHTML = `
+        <button id="daily-check-in">每日簽到</button>
+        <span id="coins-display">鬥靈幣: ${currentCoins}</span>
+    `;
+    const lobbyPage = document.getElementById('lobby-page');
+    lobbyPage.insertBefore(lobbyHeader, lobbyPage.firstChild);
+
+    const checkInButton = document.getElementById('daily-check-in');
+    if (canCheckIn()) {
+        checkInButton.disabled = false;
+        checkInButton.textContent = '每日簽到';
+    } else {
+        checkInButton.disabled = true;
+        checkInButton.textContent = '已簽到';
+    }
+
+    checkInButton.addEventListener('click', () => {
+        if (canCheckIn()) {
+            socket.emit('checkIn', { username: currentUser }, (response) => {
+                if (response.success) {
+                    currentCoins = response.coins;
+                    updateCoinsDisplay();
+                    lastCheckIn = Date.now();
+                    localStorage.setItem('lastCheckIn', lastCheckIn);
+                    checkInButton.disabled = true;
+                    checkInButton.textContent = '已簽到';
+                    alert('簽到成功！獲得 1000000 鬥靈幣');
+                } else {
+                    alert('簽到失敗');
+                }
+            });
+        }
+    });
+}
+
 // 線上鬥靈功能
 document.getElementById('login-submit').addEventListener('click', () => {
     const username = document.getElementById('login-username').value;
@@ -488,9 +558,13 @@ document.getElementById('login-submit').addEventListener('click', () => {
     socket.emit('login', { username, password }, (response) => {
         if (response.success) {
             currentUser = username;
-            document.getElementById('login-page').style.display = 'none';
-            document.getElementById('lobby-page').style.display = 'block';
-            loadRoomList();
+            socket.emit('getCoins', { username }, (coins) => {
+                currentCoins = coins;
+                document.getElementById('login-page').style.display = 'none';
+                document.getElementById('lobby-page').style.display = 'block';
+                initLobbyPage(); // 初始化大廳頁面
+                loadRoomList();
+            });
         } else {
             alert(response.message);
         }
@@ -574,6 +648,8 @@ document.getElementById('join-room').addEventListener('click', () => {
         }
     });
 });
+
+
 
 document.getElementById('refresh-rooms').addEventListener('click', loadRoomList);
 
@@ -699,7 +775,8 @@ socket.on('updateProps', (data) => {
 });
 
 socket.on('updateCoins', (coins) => {
-    console.log(`你的鬥靈幣: ${coins}`);
+    currentCoins = coins;
+    updateCoinsDisplay();
 });
 
 function startBetPhase(betTime, spirits) {
