@@ -187,12 +187,9 @@ button:hover {
     display: flex;
     flex-direction: column;
     align-items: center;
+    justify-content: center; /* 置中修改 */
     gap: 15px;
-    min-height: 100vh;
-    justify-content: center;
-    width: 100%;
-    max-width: 400px;
-    margin: 0 auto;
+    min-height: 100vh; /* 確保頁面高度填滿 */
 }
 
 #settings-page label, #create-room-page label {
@@ -277,108 +274,4 @@ button:hover {
     flex-wrap: wrap;
     gap: 10px;
     justify-content: center;
-}
-
-/* 線上鬥靈相關樣式 */
-.lobby-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 10px;
-    background-color: #d0d0d0;
-    width: 100%;
-    position: fixed;
-    top: 0;
-    left: 0;
-}
-
-#username-display {
-    font-weight: bold;
-    margin-right: 10px;
-}
-
-#daily-check-in {
-    padding: 5px 10px;
-}
-
-#coins-display {
-    font-weight: bold;
-}
-
-.back-button {
-    position: absolute;
-    top: 20px;
-    left: 20px;
-    padding: 5px 10px;
-    font-size: 14px;
-}
-
-.login-content {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 15px;
-    width: 100%;
-    max-width: 300px;
-}
-
-.login-form, .register-form {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 15px;
-    background-color: #444;
-    padding: 20px;
-    border-radius: 5px;
-    border: 1px solid #666;
-    width: 100%;
-    max-width: 300px;
-}
-
-.login-form input, .login-form button, .register-form input, .register-form button {
-    margin: 5px 0;
-    padding: 8px;
-    width: 100%;
-    max-width: 200px;
-    box-sizing: border-box;
-}
-
-#room-page {
-    display: flex;
-    flex-direction: row;
-    justify-content: space-between;
-    align-items: flex-start;
-    padding-top: 60px;
-}
-
-#player-list {
-    width: 200px;
-    background-color: #444;
-    padding: 10px;
-    border-radius: 5px;
-    border: 1px solid #666;
-}
-
-#player-list h3 {
-    margin: 0 0 10px 0;
-    font-size: 16px;
-}
-
-#player-list ul {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-}
-
-#player-list li {
-    padding: 5px 0;
-    font-size: 14px;
-}
-
-#room-content {
-    flex-grow: 1;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 15px;
 }
