@@ -273,3 +273,20 @@ button:hover {
     gap: 10px;
     justify-content: center;
 }
+
+
+.lobby-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px;
+    background-color: #f0f0f0;
+}
+
+#daily-check-in {
+    padding: 5px 10px;
+}
+
+#coins-display {
+    font-weight: bold;
+}
