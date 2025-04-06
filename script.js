@@ -512,11 +512,12 @@ function updateCoinsDisplay() {
     }
 }
 
-// 新增：初始化大廳頁面（顯示鬥靈幣和每日簽到）
+// 新增：初始化大廳頁面（顯示帳號名稱、簽到按鈕和鬥靈幣）
 function initLobbyPage() {
     const lobbyHeader = document.createElement('div');
     lobbyHeader.classList.add('lobby-header');
     lobbyHeader.innerHTML = `
+        <span id="current-username">玩家: ${currentUser}</span>
         <button id="daily-check-in">每日簽到</button>
         <span id="coins-display">鬥靈幣: ${currentCoins}</span>
     `;
@@ -649,8 +650,6 @@ document.getElementById('join-room').addEventListener('click', () => {
     });
 });
 
-
-
 document.getElementById('refresh-rooms').addEventListener('click', loadRoomList);
 
 document.getElementById('back-to-lobby').addEventListener('click', () => {
@@ -690,8 +689,32 @@ function enterRoom(roomId) {
     document.getElementById('lobby-page').style.display = 'none';
     document.getElementById('room-page').style.display = 'block';
     document.getElementById('room-title').textContent = `房間: ${roomId}`;
+    
+    // 顯示玩家列表
+    const playerList = document.getElementById('player-list');
+    if (!playerList) {
+        const playerListDiv = document.createElement('div');
+        playerListDiv.id = 'player-list';
+        playerListDiv.classList.add('player-list');
+        document.getElementById('room-page').insertBefore(playerListDiv, document.getElementById('room-title').nextSibling);
+    }
+    
+    // 從伺服器獲取房間資訊並更新玩家列表
     socket.emit('getRoomInfo', roomId, (room) => {
         document.getElementById('start-game').style.display = room.owner === currentUser ? 'block' : 'none';
+        updatePlayerList(room.players);
+    });
+}
+
+// 新增：更新玩家列表的函數
+function updatePlayerList(players) {
+    const playerList = document.getElementById('player-list');
+    playerList.innerHTML = '<h3>玩家列表</h3>';
+    players.forEach(player => {
+        const playerDiv = document.createElement('div');
+        playerDiv.classList.add('player-item');
+        playerDiv.textContent = player.username;
+        playerList.appendChild(playerDiv);
     });
 }
 
@@ -887,4 +910,24 @@ function shuffleArray(array) {
 socket.on('gameResult', (data) => {
     const phaseDiv = document.getElementById('game-phase');
     phaseDiv.innerHTML = `遊戲結束！贏家: ${data.winner}，獲得: ${data.payout} 鬥靈幣`;
+});
+
+// 監聽玩家離開事件
+socket.on('playerLeft', (data) => {
+    if (data.roomId === currentRoomId) {
+        socket.emit('getRoomInfo', currentRoomId, (room) => {
+            updatePlayerList(room.players);
+        });
+    }
+});
+
+// 監聽房間關閉事件
+socket.on('roomClosed', (roomId) => {
+    if (roomId === currentRoomId) {
+        alert('房間已關閉！房主已離開。');
+        document.getElementById('room-page').style.display = 'none';
+        document.getElementById('lobby-page').style.display = 'block';
+        currentRoomId = null;
+        loadRoomList();
+    }
 });
