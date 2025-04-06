@@ -190,6 +190,9 @@ button:hover {
     gap: 15px;
     min-height: 100vh; /* 確保頁面高度填滿視窗 */
     justify-content: center; /* 垂直居中 */
+    width: 100%; /* 確保佔滿寬度 */
+    max-width: 400px; /* 限制最大寬度，確保內容不會過寬 */
+    margin: 0 auto; /* 左右居中 */
 }
 
 #settings-page label, #create-room-page label {
@@ -261,4 +264,66 @@ button:hover {
     background-color: #444;
     border: 1px solid #666;
     border-radius: 5px;
-    cursor
+    cursor: pointer;
+}
+
+.room-item:hover {
+    background-color: #555;
+}
+
+#player-actions {
+    margin-top: 20px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: center;
+}
+
+.lobby-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px;
+    background-color: #f0f0f0;
+    width: 100%;
+    position: fixed;
+    top: 0;
+    left: 0;
+}
+
+#daily-check-in {
+    padding: 5px 10px;
+}
+
+#coins-display {
+    font-weight: bold;
+}
+
+.login-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    max-width: 300px;
+}
+
+.login-form, .register-form {
+    display: flex;
+    flex-direction: column; /* 垂直排列 */
+    align-items: center;
+    gap: 15px; /* 元素之間的間距 */
+    background-color: #444;
+    padding: 20px;
+    border-radius: 5px;
+    border: 1px solid #666;
+    width: 100%; /* 確保表單寬度與父元素一致 */
+    max-width: 300px; /* 限制表單最大寬度 */
+}
+
+.login-form input, .login-form button, .register-form input, .register-form button {
+    margin: 5px 0;
+    padding: 8px;
+    width: 100%; /* 確保輸入框和按鈕寬度一致 */
+    max-width: 200px; /* 限制最大寬度 */
+    box-sizing: border-box; /* 確保 padding 不影響寬度 */
+}
