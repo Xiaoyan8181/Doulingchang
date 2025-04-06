@@ -34,13 +34,13 @@ button:hover {
     background-color: #777;
 }
 
-#selection {
+#selection, #calculation-page, #room-page {
     transform: scale(0.8);
     transform-origin: top center;
     max-width: 960px;
 }
 
-#spirit-list {
+#spirit-list, #calculation-spirits {
     display: flex;
     flex-wrap: wrap;
     gap: 8px;
@@ -64,17 +64,10 @@ button:hover {
     font-size: 14px;
 }
 
-.spirit.epic {
-    border-color: gold;
-}
-
-.spirit.rare {
-    border-color: purple;
-}
-
-.spirit.common {
-    border-color: blue;
-}
+.spirit.epic { border-color: gold; }
+.spirit.rare { border-color: purple; }
+.spirit.common { border-color: blue; }
+.spirit.custom { border-color: black !important; }
 
 #selected-spirits {
     margin-top: 16px;
@@ -152,13 +145,6 @@ button:hover {
     width: 60px;
     height: 60px;
     padding: 5px;
-    background-size: cover;
-    background-position: center;
-    color: white;
-    text-shadow: 1px 1px 2px black;
-    display: flex;
-    align-items: center;
-    justify-content: center;
     flex-shrink: 0;
 }
 
@@ -189,40 +175,29 @@ button:hover {
     font-size: 14px;
     flex-shrink: 0;
     max-width: 200px;
-    white-space: normal; /* 允許換行 */
-    line-height: 1.5; /* 行高，控制間距 */
-    text-align: left; /* 左對齊 */
+    white-space: normal;
+    line-height: 1.5;
+    text-align: left;
 }
 
-.result-row .props-text .positive {
-    color: #4caf50; /* 綠色，正面道具 */
-}
+.result-row .props-text .positive { color: #4caf50; }
+.result-row .props-text .negative { color: #f44336; }
 
-.result-row .props-text .negative {
-    color: #f44336; /* 紅色，負面道具 */
-}
-
-#settings-page {
+#settings-page, #login-page, #register-page, #lobby-page, #create-room-page {
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: 15px;
 }
 
-#settings-page label {
+#settings-page label, #create-room-page label {
     font-size: 18px;
 }
 
-#settings-page input {
+#settings-page input, #login-page input, #register-page input, #create-room-page input, #create-room-page select {
     padding: 5px;
     font-size: 16px;
     width: 150px;
-}
-
-.sample-size-text {
-    font-size: 14px;
-    color: #ccc;
-    margin-top: -10px;
 }
 
 #custom-spirit-form {
@@ -264,10 +239,6 @@ button:hover {
     font-size: 12px;
 }
 
-.spirit.custom {
-    border-color: black !important;
-}
-
 .menu-image {
     position: absolute;
     top: 10px;
@@ -277,23 +248,28 @@ button:hover {
     cursor: pointer;
 }
 
-#calculation-page {
-    transform: scale(0.8);
-    transform-origin: top center;
-    max-width: 960px;
+#room-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
 }
 
-#calculation-spirits {
+.room-item {
+    padding: 10px;
+    background-color: #444;
+    border: 1px solid #666;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.room-item:hover {
+    background-color: #555;
+}
+
+#player-actions {
+    margin-top: 20px;
     display: flex;
     flex-wrap: wrap;
+    gap: 10px;
     justify-content: center;
-    gap: 16px;
-    width: 100%;
-    max-width: 960px;
-    margin: 20px auto;
-}
-
-#progress-text {
-    font-size: 16px;
-    margin-top: 20px;
 }
