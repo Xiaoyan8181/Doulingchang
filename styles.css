@@ -332,10 +332,28 @@ button:hover {
     max-width: 300px;
 }
 
-.login-form input, .login-form button, .register-form input, .register-form button {
+/* 新增：玩家列表樣式 */
+.player-list {
+    position: absolute;
+    left: 10px;
+    top: 50px;
+    width: 200px;
+    background-color: #f0f0f0;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+}
+
+.player-item {
     margin: 5px 0;
-    padding: 8px;
-    width: 100%;
-    max-width: 200px;
-    box-sizing: border-box;
+    padding: 5px;
+    background-color: #fff;
+    border: 1px solid #ddd;
+    border-radius: 3px;
+}
+
+/* 新增：帳號名稱樣式 */
+#current-username {
+    margin-right: 10px;
+    font-weight: bold;
 }
