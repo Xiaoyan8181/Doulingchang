@@ -1,19 +1,6 @@
 // 侍靈資料
-let rare = [
-    2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
-    2, 2, 2, 2, 1, 1, 1, 1, 1, 1,
-    1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-    1, 0, 0
-];
-let name = [
-    "瑞", "焱", "阿豪", "九尾", "騰蛇",
-    "玄武", "麒麟", "諦聽", "白澤", "蒼龍",
-    "金烏", "夔牛", "鯤鵬", "月靈", "魯魯",
-    "阿樂", "玥兒", "琉璃", "梟梟", "蠻蠻",
-    "佑佑", "鴨鴨", "阿猛", "白狐", "喬喬",
-    "阿琢", "康康", "阿賀", "元元", "阿先",
-    "奇奇", "大桶", "雪人"
-];
+let rare = [2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0];
+let name = ["瑞", "焱", "阿豪", "九尾", "騰蛇", "玄武", "麒麟", "諦聽", "白澤", "蒼龍", "金烏", "夔牛", "鯤鵬", "月靈", "魯魯", "阿樂", "玥兒", "琉璃", "梟梟", "蠻蠻", "佑佑", "鴨鴨", "阿猛", "白狐", "喬喬", "阿琢", "康康", "阿賀", "元元", "阿先", "奇奇", "大桶", "雪人"];
 let dice = [
     [4, 4, 4, 5, 5, 5], [3, 3, 5, 5, 6, 6], [0, 2, 4, 4, 8, 10], [3, 3, 5, 5, 6, 6], [4, 4, 6, 6, 8, 8],
     [1, 3, 3, 6, 9, 9], [4, 4, 4, 5, 5, 5], [2, 2, 4, 4, 7, 7], [4, 4, 4, 5, 5, 5], [4, 4, 4, 5, 5, 5],
@@ -24,7 +11,7 @@ let dice = [
     [3, 3, 3, 4, 4, 4], [3, 3, 3, 4, 4, 4], [1, 2, 3, 4, 5, 6], [0, 1, 4, 4, 6, 6]
 ];
 
-// 已選擇的侍靈
+// 已選擇的侍靈和模擬次數
 let selectedSpirits = [];
 let totalSimulations = 100000;
 
@@ -32,6 +19,11 @@ let totalSimulations = 100000;
 const rjjdcAudio = new Audio('audio/RJJDC.mp3');
 const ngmayAudio = new Audio('audio/NGMAY.mp3');
 const lblhnkgAudio = new Audio('audio/LBLHNKG.mp3');
+
+// Socket.IO 連線
+const socket = io('https://your-glitch-project.glitch.me'); // 替換為你的 Glitch URL
+let currentUser = null;
+let currentRoomId = null;
 
 // 目錄按鈕事件
 document.getElementById('start').addEventListener('click', () => {
@@ -57,6 +49,11 @@ document.getElementById('settings').addEventListener('click', () => {
     updateCustomSpiritList();
 });
 
+document.getElementById('online-battle').addEventListener('click', () => {
+    document.getElementById('menu').style.display = 'none';
+    document.getElementById('login-page').style.display = 'block';
+});
+
 document.getElementById('exit').addEventListener('click', () => {
     window.close();
 });
@@ -79,7 +76,7 @@ document.getElementById('back-to-menu-from-author').addEventListener('click', ()
     document.getElementById('menu').style.display = 'block';
 });
 
-// 為圖片添加點擊播放音頻的事件
+// 圖片點擊播放音頻
 document.getElementById('rjjdc-image').addEventListener('click', () => {
     rjjdcAudio.play().catch(error => console.error('錯誤', error));
 });
@@ -218,8 +215,7 @@ function updateSelectedList() {
         nameSpan.style.backgroundImage = `url('images/${String(index + 1).padStart(3, '0')}.png')`;
         nameSpan.addEventListener('click', () => {
             if (index === 31) ngmayAudio.play().catch(error => console.error('錯誤:', error));
-            selectedSpirits = selectedSpirits.filter(i => i !== index);
-            updateSelectedList();
+            selectedSpirits = selectedSpirits.filter(i => i !== index;\n            updateSelectedList();
         });
         itemDiv.appendChild(nameSpan);
 
@@ -399,8 +395,8 @@ function displayResults(wins, totalSimulations, props) {
     resultTable.classList.add('result-table');
 
     const propLabels = ['+0~2', '+2~4', '骰子+1', '-0~2', '-2~4', '點數=1'];
-    const positiveProps = [0, 1, 2]; // 正面道具索引
-    const negativeProps = [3, 4, 5]; // 負面道具索引
+    const positiveProps = [0, 1, 2];
+    const negativeProps = [3, 4, 5];
 
     selectedSpirits.forEach((spiritIndex, i) => {
         const winRate = (wins[i] / totalSimulations * 100).toFixed(2);
@@ -431,7 +427,6 @@ function displayResults(wins, totalSimulations, props) {
         winRateText.textContent = `${winRate}% (${wins[i]} 次勝利)`;
         row.appendChild(winRateText);
 
-        // 新增道具資訊，每行最多 2 個
         const propsText = document.createElement('span');
         propsText.classList.add('props-text');
         const propValues = props[i];
@@ -439,11 +434,8 @@ function displayResults(wins, totalSimulations, props) {
             if (propValues[idx] > 0) {
                 const propSpan = document.createElement('span');
                 propSpan.textContent = `(${label}): ${propValues[idx]}`;
-                if (positiveProps.includes(idx)) {
-                    propSpan.classList.add('positive');
-                } else if (negativeProps.includes(idx)) {
-                    propSpan.classList.add('negative');
-                }
+                if (positiveProps.includes(idx)) propSpan.classList.add('positive');
+                else if (negativeProps.includes(idx)) propSpan.classList.add('negative');
                 return propSpan.outerHTML;
             }
             return null;
@@ -453,11 +445,8 @@ function displayResults(wins, totalSimulations, props) {
             let formattedProps = '';
             for (let j = 0; j < usedProps.length; j++) {
                 formattedProps += usedProps[j];
-                if (j % 2 === 1 && j < usedProps.length - 1) {
-                    formattedProps += '<br>';
-                } else if (j < usedProps.length - 1) {
-                    formattedProps += ', ';
-                }
+                if (j % 2 === 1 && j < usedProps.length - 1) formattedProps += '<br>';
+                else if (j < usedProps.length - 1) formattedProps += ', ';
             }
             propsText.innerHTML = formattedProps;
         } else {
@@ -490,3 +479,333 @@ function displayResults(wins, totalSimulations, props) {
 
     document.body.appendChild(resultDiv);
 }
+
+// 線上鬥靈功能
+document.getElementById('login-submit').addEventListener('click', () => {
+    const username = document.getElementById('login-username').value;
+    const password = document.getElementById('login-password').value;
+    socket.emit('login', { username, password }, (response) => {
+        if (response.success) {
+            currentUser = username;
+            document.getElementById('login-page').style.display = 'none';
+            document.getElementById('lobby-page').style.display = 'block';
+            loadRoomList();
+        } else {
+            alert(response.message);
+        }
+    });
+});
+
+document.getElementById('show-register').addEventListener('click', () => {
+    document.getElementById('login-page').style.display = 'none';
+    document.getElementById('register-page').style.display = 'block';
+});
+
+document.getElementById('back-to-login').addEventListener('click', () => {
+    document.getElementById('register-page').style.display = 'none';
+    document.getElementById('login-page').style.display = 'block';
+});
+
+document.getElementById('register-submit').addEventListener('click', () => {
+    const username = document.getElementById('register-username').value;
+    const password = document.getElementById('register-password').value;
+    const confirmPassword = document.getElementById('register-confirm-password').value;
+    if (password !== confirmPassword) {
+        alert('密碼與確認密碼不一致');
+        return;
+    }
+    socket.emit('register', { username, password }, (response) => {
+        alert(response.message);
+        if (response.success) {
+            document.getElementById('register-page').style.display = 'none';
+            document.getElementById('login-page').style.display = 'block';
+        }
+    });
+});
+
+document.getElementById('back-to-menu-from-lobby').addEventListener('click', () => {
+    document.getElementById('lobby-page').style.display = 'none';
+    document.getElementById('menu').style.display = 'block';
+});
+
+document.getElementById('create-room').addEventListener('click', () => {
+    document.getElementById('lobby-page').style.display = 'none';
+    document.getElementById('create-room-page').style.display = 'block';
+});
+
+document.getElementById('room-public').addEventListener('change', (e) => {
+    document.getElementById('room-password').style.display = e.target.value === 'true' ? 'block' : 'none';
+});
+
+document.getElementById('cancel-create').addEventListener('click', () => {
+    document.getElementById('create-room-page').style.display = 'none';
+    document.getElementById('lobby-page').style.display = 'block';
+});
+
+document.getElementById('confirm-create').addEventListener('click', () => {
+    const room = {
+        name: document.getElementById('room-name').value,
+        isPublic: document.getElementById('room-public').value === 'true',
+        password: document.getElementById('room-password').value,
+        limit: parseInt(document.getElementById('room-limit').value),
+        feedTime: parseInt(document.getElementById('feed-time').value),
+        betTime: parseInt(document.getElementById('bet-time').value),
+        owner: currentUser
+    };
+    socket.emit('createRoom', room, (response) => {
+        if (response.success) {
+            currentRoomId = response.roomId;
+            enterRoom(response.roomId);
+        } else {
+            alert(response.message);
+        }
+    });
+});
+
+document.getElementById('join-room').addEventListener('click', () => {
+    const roomId = document.getElementById('join-room-id').value;
+    socket.emit('joinRoom', { roomId, username: currentUser }, (response) => {
+        if (response.success) {
+            currentRoomId = roomId;
+            enterRoom(roomId);
+        } else {
+            alert(response.message);
+        }
+    });
+});
+
+document.getElementById('refresh-rooms').addEventListener('click', loadRoomList);
+
+document.getElementById('back-to-lobby').addEventListener('click', () => {
+    socket.emit('leaveRoom', { roomId: currentRoomId, username: currentUser });
+    document.getElementById('room-page').style.display = 'none';
+    document.getElementById('lobby-page').style.display = 'block';
+    currentRoomId = null;
+});
+
+function loadRoomList() {
+    socket.emit('getRooms', (rooms) => {
+        const roomList = document.getElementById('room-list');
+        roomList.innerHTML = '';
+        Object.entries(rooms).forEach(([id, room]) => {
+            if (room.isPublic && room.status === 'open') {
+                const div = document.createElement('div');
+                div.textContent = `${room.name} (${room.players.length}/${room.limit || '∞'})`;
+                div.classList.add('room-item');
+                div.addEventListener('click', () => {
+                    socket.emit('joinRoom', { roomId: id, username: currentUser }, (response) => {
+                        if (response.success) {
+                            currentRoomId = id;
+                            enterRoom(id);
+                        } else {
+                            alert(response.message);
+                        }
+                    });
+                });
+                roomList.appendChild(div);
+            }
+        });
+    });
+}
+
+function enterRoom(roomId) {
+    document.getElementById('create-room-page').style.display = 'none';
+    document.getElementById('lobby-page').style.display = 'none';
+    document.getElementById('room-page').style.display = 'block';
+    document.getElementById('room-title').textContent = `房間: ${roomId}`;
+    socket.emit('getRoomInfo', roomId, (room) => {
+        document.getElementById('start-game').style.display = room.owner === currentUser ? 'block' : 'none';
+    });
+}
+
+document.getElementById('start-game').addEventListener('click', () => {
+    socket.emit('startGame', currentRoomId);
+});
+
+socket.on('gameStarted', (data) => {
+    const spirits = data.spirits.map((idx) => ({
+        name: name[idx],
+        index: idx,
+        score: 0,
+        props: [],
+        bets: 0
+    }));
+    displaySpirits(spirits);
+    startFeedPhase(data.feedTime, spirits);
+});
+
+function displaySpirits(spirits) {
+    const boxes = document.getElementById('spirit-boxes');
+    boxes.innerHTML = '';
+    spirits.forEach((spirit, i) => {
+        const div = document.createElement('div');
+        div.classList.add('spirit');
+        div.id = `spirit-${i}`;
+        div.style.backgroundImage = `url('images/${String(spirit.index + 1).padStart(3, '0')}.png')`;
+        div.innerHTML = `${spirit.name}<br>積分: ${spirit.score}<br>下注: ${spirit.bets}`;
+        boxes.appendChild(div);
+    });
+}
+
+function startFeedPhase(feedTime, spirits) {
+    const phaseDiv = document.getElementById('game-phase');
+    phaseDiv.innerHTML = `投餵道具時間: <span id="feed-timer">${feedTime}</span>秒`;
+    const actions = document.getElementById('player-actions');
+    actions.innerHTML = '';
+    const props = ['+0~2', '-0~2', '+2~4', '-2~4', '骰子+1', '點數=1'];
+    const costs = [200, 200, 400, 400, 600, 600];
+    const availableProps = Array(6).fill().map(() => props[Math.floor(Math.random() * 6)]);
+    availableProps.forEach((prop, i) => {
+        const btn = document.createElement('button');
+        btn.textContent = `${prop} (${costs[props.indexOf(prop)]}幣)`;
+        btn.addEventListener('click', () => buyProp(prop, spirits));
+        actions.appendChild(btn);
+    });
+    const refreshBtn = document.createElement('button');
+    refreshBtn.textContent = '刷新 (50幣)';
+    refreshBtn.addEventListener('click', () => socket.emit('refreshProps', currentRoomId));
+    actions.appendChild(refreshBtn);
+
+    let timeLeft = feedTime;
+    const timer = setInterval(() => {
+        timeLeft--;
+        document.getElementById('feed-timer').textContent = timeLeft;
+        if (timeLeft <= 0) {
+            clearInterval(timer);
+            startBetPhase(data.betTime, spirits);
+        }
+    }, 1000);
+}
+
+function buyProp(prop, spirits) {
+    const target = prompt('選擇投餵目標（輸入侍靈名稱）');
+    const targetSpirit = spirits.find(s => s.name === target);
+    if (targetSpirit) {
+        socket.emit('buyProp', { roomId: currentRoomId, prop, target });
+    } else {
+        alert('無效的侍靈名稱');
+    }
+}
+
+socket.on('updateProps', (data) => {
+    const spirits = Array.from(document.getElementById('spirit-boxes').children);
+    spirits.forEach((spiritDiv, i) => {
+        const spiritName = spiritDiv.textContent.split('\n')[0];
+        if (data[spiritName]) {
+            spiritDiv.dataset.props = JSON.stringify(data[spiritName]);
+        }
+    });
+});
+
+socket.on('updateCoins', (coins) => {
+    console.log(`你的鬥靈幣: ${coins}`);
+});
+
+function startBetPhase(betTime, spirits) {
+    const phaseDiv = document.getElementById('game-phase');
+    phaseDiv.innerHTML = `下注時間: <span id="bet-timer">${betTime}</span>秒`;
+    const actions = document.getElementById('player-actions');
+    actions.innerHTML = '';
+    spirits.forEach((spirit, i) => {
+        const div = document.createElement('div');
+        div.innerHTML = `${spirit.name} (賠率: ${calculateOdds(spirit.bets, spirits))}`;
+        const input = document.createElement('input');
+        input.type = 'number';
+        input.min = '0';
+        input.placeholder = '下注金額';
+        const btn = document.createElement('button');
+        btn.textContent = '下注';
+        btn.addEventListener('click', () => {
+            socket.emit('placeBet', { roomId: currentRoomId, spirit: spirit.name, amount: parseInt(input.value) });
+        });
+        div.appendChild(input);
+        div.appendChild(btn);
+        actions.appendChild(div);
+    });
+
+    let timeLeft = betTime;
+    const timer = setInterval(() => {
+        timeLeft--;
+        document.getElementById('bet-timer').textContent = timeLeft;
+        if (timeLeft <= 0) {
+            clearInterval(timer);
+            startGamePhase(spirits);
+        }
+    }, 1000);
+}
+
+function calculateOdds(spiritBets, spirits) {
+    const totalBets = spirits.reduce((sum, s) => sum + s.bets, 0);
+    if (totalBets === 0) return 1;
+    const odds = Math.min(99, Math.round(totalBets / (spiritBets || 1)));
+    return odds;
+}
+
+socket.on('updateBets', (bets) => {
+    const spirits = Array.from(document.getElementById('spirit-boxes').children);
+    spirits.forEach((spiritDiv, i) => {
+        const spiritName = spiritDiv.textContent.split('\n')[0];
+        const bet = bets[spiritName] || 0;
+        spiritDiv.innerHTML = `${spiritName}<br>積分: ${spiritDiv.textContent.split('\n')[1].split(': ')[1]}<br>下注: ${bet}`;
+    });
+});
+
+async function startGamePhase(spirits) {
+    const phaseDiv = document.getElementById('game-phase');
+    phaseDiv.innerHTML = '遊戲進行中';
+    const actions = document.getElementById('player-actions');
+    actions.innerHTML = '';
+
+    for (let spirit of spirits) {
+        if (spiritDiv.dataset.props) {
+            spirit.props = JSON.parse(spiritDiv.dataset.props || '[]');
+            shuffleArray(spirit.props);
+        }
+    }
+
+    let gameOver = false;
+    while (!gameOver) {
+        for (let i = 0; i < spirits.length; i++) {
+            const spirit = spirits[i];
+            const spiritDiv = document.getElementById(`spirit-${i}`);
+            let roll = dice[spirit.index][Math.floor(Math.random() * 6)];
+            if (spirit.props.length > 0) {
+                const prop = spirit.props.shift();
+                switch (prop) {
+                    case '+0~2': roll += Math.floor(Math.random() * 3); break;
+                    case '+2~4': roll += 2 + Math.floor(Math.random() * 3); break;
+                    case '骰子+1': roll += dice[spirit.index][Math.floor(Math.random() * 6)]; break;
+                    case '-0~2': roll -= Math.floor(Math.random() * 3); break;
+                    case '-2~4': roll -= 2 + Math.floor(Math.random() * 3); break;
+                    case '點數=1': roll = 1; break;
+                }
+                if (roll < 0) roll = 0;
+            }
+            spirit.score += roll;
+            spiritDiv.innerHTML = `${spirit.name}<br>積分: ${spirit.score}<br>下注: ${spirit.bets}`;
+            await new Promise(resolve => setTimeout(resolve, 5000)); // 5秒停頓
+
+            const maxScore = Math.max(...spirits.map(s => s.score));
+            if (maxScore > 120) {
+                const winners = spirits.filter(s => s.score === maxScore);
+                if (winners.length === 1) {
+                    gameOver = true;
+                    socket.emit('gameEnd', { roomId: currentRoomId, winner: winners[0].name });
+                    break;
+                }
+            }
+        }
+    }
+}
+
+function shuffleArray(array) {
+    for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+    }
+}
+
+socket.on('gameResult', (data) => {
+    const phaseDiv = document.getElementById('game-phase');
+    phaseDiv.innerHTML = `遊戲結束！贏家: ${data.winner}，獲得: ${data.payout} 鬥靈幣`;
+});
