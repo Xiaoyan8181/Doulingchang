@@ -188,11 +188,11 @@ button:hover {
     flex-direction: column;
     align-items: center;
     gap: 15px;
-    min-height: 100vh; /* 確保頁面高度填滿視窗 */
-    justify-content: center; /* 垂直居中 */
+    min-height: 100vh;
+    justify-content: center;
     width: 100%;
-    max-width: 400px; /* 限制最大寬度 */
-    margin: 0 auto; /* 左右居中 */
+    max-width: 400px;
+    margin: 0 auto;
 }
 
 #settings-page label, #create-room-page label {
@@ -279,16 +279,22 @@ button:hover {
     justify-content: center;
 }
 
+/* 線上鬥靈相關樣式 */
 .lobby-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
     padding: 10px;
-    background-color: #f0f0f0;
+    background-color: #d0d0d0;
     width: 100%;
     position: fixed;
     top: 0;
     left: 0;
+}
+
+#username-display {
+    font-weight: bold;
+    margin-right: 10px;
 }
 
 #daily-check-in {
@@ -299,7 +305,6 @@ button:hover {
     font-weight: bold;
 }
 
-/* 新增：返回按鈕樣式 */
 .back-button {
     position: absolute;
     top: 20px;
@@ -308,17 +313,15 @@ button:hover {
     font-size: 14px;
 }
 
-/* 新增：登入頁面內容容器 */
 .login-content {
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: 15px;
     width: 100%;
-    max-width: 300px; /* 限制內容寬度 */
+    max-width: 300px;
 }
 
-/* 修改：登入表單樣式 */
 .login-form, .register-form {
     display: flex;
     flex-direction: column;
@@ -338,4 +341,44 @@ button:hover {
     width: 100%;
     max-width: 200px;
     box-sizing: border-box;
+}
+
+#room-page {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding-top: 60px;
+}
+
+#player-list {
+    width: 200px;
+    background-color: #444;
+    padding: 10px;
+    border-radius: 5px;
+    border: 1px solid #666;
+}
+
+#player-list h3 {
+    margin: 0 0 10px 0;
+    font-size: 16px;
+}
+
+#player-list ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+#player-list li {
+    padding: 5px 0;
+    font-size: 14px;
+}
+
+#room-content {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
 }
