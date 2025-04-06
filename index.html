@@ -1,71 +1,71 @@
 <!DOCTYPE html>
-<html lang="zh-TW">
+<html lang="zh">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>鬥靈場</title>
+    <title>鬥靈場侍靈勝率計算器</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div id="menu-page">
-        <div class="container">
-            <h1>鬥靈場</h1>
-            <div class="button-container">
-                <button onclick="showPage('selection')">單人模式</button>
-                <button onclick="showPage('calculation-page')">計算機</button>
-                <button onclick="showPage('login-page')">線上鬥靈</button>
-                <button onclick="showPage('settings-page')">設定</button>
-            </div>
-            <img src="menu-icon.png" alt="Menu" class="menu-image" onclick="showPage('menu-page')">
+    <!-- 目錄介面 -->
+    <div id="menu" class="container">
+        <h1>鬥靈場侍靈勝率計算器</h1>
+        <div class="button-container">
+            <button id="start">開始使用</button>
+            <button id="instructions">使用說明</button>
+            <button id="author">作者</button>
+            <button id="settings">設定</button>
+            <button id="online-battle">線上鬥靈</button>
+            <button id="exit">離開</button>
+        </div>
+        <img id="rjjdc-image" src="images/RJJDC.png" alt="RJJDC" class="menu-image">
+    </div>
+
+    <!-- 選擇介面 -->
+    <div id="selection" class="container" style="display: none;">
+        <h1>選擇侍靈（最多4個）</h1>
+        <div id="spirit-list"></div>
+        <div id="selected-spirits">
+            <h2>已選擇的侍靈</h2>
+            <div id="selected-list"></div>
+            <button id="start-calculation">開始計算</button>
+            <button id="back-to-menu-from-selection">回到目錄</button>
         </div>
     </div>
 
-    <div id="selection" style="display: none;">
-        <div class="container">
-            <h1>選擇你的鬥靈</h1>
-            <div id="spirit-list"></div>
-            <div id="selected-spirits">
-                <h2>已選擇的鬥靈</h2>
-                <div id="selected-list"></div>
-                <button onclick="confirmSelection()">確認選擇</button>
-            </div>
-        </div>
+    <!-- 計算頁面 -->
+    <div id="calculation-page" class="container" style="display: none;">
+        <h1>計算中</h1>
+        <div id="calculation-spirits"></div>
+        <p id="progress-text">計算進度：0%</p>
     </div>
 
-    <div id="calculation-page" style="display: none;">
-        <div class="container">
-            <h1>戰力計算機</h1>
-            <div id="calculation-spirits"></div>
-            <div id="selected-spirits">
-                <h2>已選擇的鬥靈</h2>
-                <div id="selected-list"></div>
-                <button onclick="calculatePower()">計算戰力</button>
-            </div>
-            <div class="result-table" id="calculation-results"></div>
-        </div>
-    </div>
-
-    <div id="settings-page" style="display: none;">
+    <!-- 設定介面 -->
+    <div id="settings-page" class="container" style="display: none;">
         <h1>設定</h1>
-        <label>背景音樂音量</label>
-        <input type="range" min="0" max="100" value="50" id="bgm-volume">
-        <label>音效音量</label>
-        <input type="range" min="0" max="100" value="50" id="sfx-volume">
-        <button onclick="saveSettings()">儲存設定</button>
-        <h2>自訂鬥靈</h2>
-        <form id="custom-spirit-form">
-            <input type="text" name="spirit-name" placeholder="鬥靈名稱">
-            <input type="number" name="hp" placeholder="HP">
-            <input type="number" name="atk" placeholder="攻擊力">
-            <input type="number" name="def" placeholder="防禦力">
-            <input type="number" name="spd" placeholder="速度">
-            <button type="submit">新增自訂鬥靈</button>
-        </form>
-        <div id="custom-spirit-list"></div>
-        <button onclick="showPage('menu-page')">返回</button>
+        <label for="sample-size">樣本數：</label>
+        <input type="number" id="sample-size" min="1000" step="1000" value="100000">
+        <button id="save-settings">保存並返回</button>
+        <button id="add-custom-spirit">新增自訂侍靈</button>
+        <div id="custom-spirit-form" style="display: none; margin-top: 20px;"></div>
+        <div id="custom-spirit-list" style="margin-top: 20px;"></div>
     </div>
 
-    <div id="login-page" style="display: none;">
+    <!-- 使用說明頁面 -->
+    <div id="instructions-page" class="container" style="display: none;">
+        <h1>使用說明</h1>
+        <p>選擇至多4個侍靈，然後每個侍靈填入6種道具的數值，計算勝率。</p>
+        <button id="back-to-menu-from-instructions">回到目錄</button>
+    </div>
+
+    <!-- 作者頁面 -->
+    <div id="author-page" class="container" style="display: none;">
+        <h1>作者</h1>
+        <p>作者：黑鷺鷺</p>
+        <button id="back-to-menu-from-author">回到目錄</button>
+    </div>
+
+    <!-- 登入畫面 -->
+    <div id="login-page" class="container" style="display: none;">
         <button id="back-to-menu-from-login" class="back-button">返回</button>
         <div class="login-content">
             <h2>登入</h2>
@@ -78,7 +78,8 @@
         </div>
     </div>
 
-    <div id="register-page" style="display: none;">
+    <!-- 註冊畫面 -->
+    <div id="register-page" class="container" style="display: none;">
         <button id="back-to-login" class="back-button">返回</button>
         <div class="login-content">
             <h2>註冊</h2>
@@ -90,10 +91,10 @@
         </div>
     </div>
 
-    <div id="lobby-page" style="display: none;">
-        <!-- 修改：大廳頁面頂部 -->
+    <!-- 鬥靈大廳 -->
+    <div id="lobby-page" class="container" style="display: none;">
         <div class="lobby-header">
-            <div id="username-display"></div> <!-- 新增：顯示帳號名稱 -->
+            <div id="username-display"></div>
             <button id="daily-check-in">每日簽到</button>
             <div id="coins-display">鬥靈幣: 0</div>
         </div>
@@ -105,7 +106,8 @@
         </div>
     </div>
 
-    <div id="create-room-page" style="display: none;">
+    <!-- 創建房間介面 -->
+    <div id="create-room-page" class="container" style="display: none;">
         <h1>創建房間</h1>
         <label>房間名稱</label>
         <input type="text" id="room-name" placeholder="輸入房間名稱">
@@ -118,8 +120,8 @@
         <button onclick="showPage('lobby-page')">返回</button>
     </div>
 
-    <div id="room-page" style="display: none;">
-        <!-- 修改：房間頁面結構 -->
+    <!-- 房間遊戲介面 -->
+    <div id="room-page" class="container" style="display: none;">
         <div id="player-list">
             <h3>房間成員</h3>
             <ul id="player-list-content"></ul>
@@ -133,7 +135,7 @@
         </div>
     </div>
 
-    <script src="/socket.io/socket.io.js"></script>
+    <script src="https://cdn.socket.io/4.5.0/socket.io.min.js"></script>
     <script src="script.js"></script>
 </body>
 </html>
