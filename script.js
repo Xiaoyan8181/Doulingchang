@@ -656,7 +656,7 @@ document.getElementById('back-to-lobby').addEventListener('click', () => {
     socket.emit('leaveRoom', { roomId: currentRoomId, username: currentUser });
     document.getElementById('room-page').style.display = 'none';
     document.getElementById('lobby-page').style.display = 'block';
-    currentRoomId = null;
+    currentRoomId = null; // 設置為 null，防止後續處理 playerLeft 事件
 });
 
 function loadRoomList() {
@@ -929,16 +929,24 @@ socket.on('gameResult', (data) => {
 
 // 監聽玩家離開事件
 socket.on('playerLeft', (data) => {
-    if (data.roomId === currentRoomId) {
+    if (data.roomId === currentRoomId && currentRoomId !== null) {
         socket.emit('getRoomInfo', currentRoomId, (room) => {
-            updatePlayerList(room.players);
+            if (room) {
+                updatePlayerList(room.players || []);
+            } else {
+                // 房間可能已被關閉
+                document.getElementById('room-page').style.display = 'none';
+                document.getElementById('lobby-page').style.display = 'block';
+                currentRoomId = null;
+                loadRoomList();
+            }
         });
     }
 });
 
 // 監聽房間關閉事件
 socket.on('roomClosed', (roomId) => {
-    if (roomId === currentRoomId) {
+    if (roomId === currentRoomId && currentRoomId !== null) {
         alert('房間已關閉！房主已離開。');
         document.getElementById('room-page').style.display = 'none';
         document.getElementById('lobby-page').style.display = 'block';
