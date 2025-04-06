@@ -21,120 +21,246 @@ const ngmayAudio = new Audio('audio/NGMAY.mp3');
 const lblhnkgAudio = new Audio('audio/LBLHNKG.mp3');
 
 // Socket.IO 連線
-const socket = io('https://your-glitch-project.glitch.me'); // 請替換為你的 Glitch URL
+const socket = io('https://doulingchang.onrender.com');
 let currentUser = null;
 let currentRoomId = null;
+let currentCoins = 0;
+const DAILY_REWARD = 1000000;
+let lastCheckIn = localStorage.getItem('lastCheckIn') || null;
 
-// 目錄按鈕事件
-document.getElementById('start').addEventListener('click', () => {
-    document.getElementById('menu').style.display = 'none';
-    document.getElementById('selection').style.display = 'block';
-    loadSpiritList();
-});
+// 等待 DOM 載入完成
+window.onload = () => {
+    // 目錄按鈕事件
+    document.getElementById('start').addEventListener('click', () => {
+        document.getElementById('menu').style.display = 'none';
+        document.getElementById('selection').style.display = 'block';
+        loadSpiritList();
+    });
 
-document.getElementById('instructions').addEventListener('click', () => {
-    document.getElementById('menu').style.display = 'none';
-    document.getElementById('instructions-page').style.display = 'block';
-});
+    document.getElementById('instructions').addEventListener('click', () => {
+        document.getElementById('menu').style.display = 'none';
+        document.getElementById('instructions-page').style.display = 'block';
+    });
 
-document.getElementById('author').addEventListener('click', () => {
-    document.getElementById('menu').style.display = 'none';
-    document.getElementById('author-page').style.display = 'block';
-});
+    document.getElementById('author').addEventListener('click', () => {
+        document.getElementById('menu').style.display = 'none';
+        document.getElementById('author-page').style.display = 'block';
+    });
 
-document.getElementById('settings').addEventListener('click', () => {
-    document.getElementById('menu').style.display = 'none';
-    document.getElementById('settings-page').style.display = 'block';
-    document.getElementById('sample-size').value = totalSimulations;
-    updateCustomSpiritList();
-});
+    document.getElementById('settings').addEventListener('click', () => {
+        document.getElementById('menu').style.display = 'none';
+        document.getElementById('settings-page').style.display = 'block';
+        document.getElementById('sample-size').value = totalSimulations;
+        updateCustomSpiritList();
+    });
 
-document.getElementById('online-battle').addEventListener('click', () => {
-    document.getElementById('menu').style.display = 'none';
-    document.getElementById('login-page').style.display = 'block';
-});
+    document.getElementById('online-battle').addEventListener('click', () => {
+        document.getElementById('menu').style.display = 'none';
+        document.getElementById('login-page').style.display = 'block';
+    });
 
-document.getElementById('exit').addEventListener('click', () => {
-    window.close();
-});
+    document.getElementById('exit').addEventListener('click', () => {
+        window.close();
+    });
 
-// 返回目錄事件
-document.getElementById('back-to-menu-from-selection').addEventListener('click', () => {
-    document.getElementById('selection').style.display = 'none';
-    document.getElementById('menu').style.display = 'block';
-    selectedSpirits = [];
-    updateSelectedList();
-});
-
-document.getElementById('back-to-menu-from-instructions').addEventListener('click', () => {
-    document.getElementById('instructions-page').style.display = 'none';
-    document.getElementById('menu').style.display = 'block';
-});
-
-document.getElementById('back-to-menu-from-author').addEventListener('click', () => {
-    document.getElementById('author-page').style.display = 'none';
-    document.getElementById('menu').style.display = 'block';
-});
-
-// 圖片點擊播放音頻
-document.getElementById('rjjdc-image').addEventListener('click', () => {
-    rjjdcAudio.play().catch(error => console.error('錯誤', error));
-});
-
-// 設定頁面 - 保存並返回
-document.getElementById('save-settings').addEventListener('click', () => {
-    const newSampleSize = parseInt(document.getElementById('sample-size').value);
-    if (newSampleSize >= 1000) {
-        totalSimulations = newSampleSize;
-        document.getElementById('settings-page').style.display = 'none';
+    // 返回目錄事件
+    document.getElementById('back-to-menu-from-selection').addEventListener('click', () => {
+        document.getElementById('selection').style.display = 'none';
         document.getElementById('menu').style.display = 'block';
-    } else {
-        alert('樣本數不能小於1000');
-    }
-});
+        selectedSpirits = [];
+        updateSelectedList();
+    });
 
-// 新增自訂侍靈
-document.getElementById('add-custom-spirit').addEventListener('click', () => {
-    const form = document.getElementById('custom-spirit-form');
-    form.style.display = 'block';
-    form.innerHTML = `
-        <div>
-            <input type="text" name="spirit-name" placeholder="名稱" required>
-            <input type="number" name="dice1" min="0" max="10" placeholder="點數1" required>
-            <input type="number" name="dice2" min="0" max="10" placeholder="點數2" required>
-            <input type="number" name="dice3" min="0" max="10" placeholder="點數3" required>
-            <input type="number" name="dice4" min="0" max="10" placeholder="點數4" required>
-            <input type="number" name="dice5" min="0" max="10" placeholder="點數5" required>
-            <input type="number" name="dice6" min="0" max="10" placeholder="點數6" required>
-            <button id="confirm-custom-spirit">確定新增侍靈</button>
-        </div>
-    `;
+    document.getElementById('back-to-menu-from-instructions').addEventListener('click', () => {
+        document.getElementById('instructions-page').style.display = 'none';
+        document.getElementById('menu').style.display = 'block';
+    });
 
-    document.getElementById('confirm-custom-spirit').addEventListener('click', () => {
-        const spiritName = form.querySelector('input[name="spirit-name"]').value;
-        const diceValues = [
-            parseInt(form.querySelector('input[name="dice1"]').value),
-            parseInt(form.querySelector('input[name="dice2"]').value),
-            parseInt(form.querySelector('input[name="dice3"]').value),
-            parseInt(form.querySelector('input[name="dice4"]').value),
-            parseInt(form.querySelector('input[name="dice5"]').value),
-            parseInt(form.querySelector('input[name="dice6"]').value)
-        ];
+    document.getElementById('back-to-menu-from-author').addEventListener('click', () => {
+        document.getElementById('author-page').style.display = 'none';
+        document.getElementById('menu').style.display = 'block';
+    });
 
-        if (spiritName && diceValues.every(val => !isNaN(val) && val >= 0 && val <= 100)) {
-            name.push(spiritName);
-            dice.push(diceValues);
-            rare.push(1);
-            form.style.display = 'none';
-            updateCustomSpiritList();
-            loadSpiritList();
+    document.getElementById('back-to-menu-from-login').addEventListener('click', () => {
+        document.getElementById('login-page').style.display = 'none';
+        document.getElementById('menu').style.display = 'block';
+    });
+
+    // 圖片點擊播放音頻
+    document.getElementById('rjjdc-image').addEventListener('click', () => {
+        rjjdcAudio.play().catch(error => console.error('錯誤', error));
+    });
+
+    // 設定頁面 - 保存並返回
+    document.getElementById('save-settings').addEventListener('click', () => {
+        const newSampleSize = parseInt(document.getElementById('sample-size').value);
+        if (newSampleSize >= 1000) {
+            totalSimulations = newSampleSize;
+            document.getElementById('settings-page').style.display = 'none';
+            document.getElementById('menu').style.display = 'block';
         } else {
-            alert('請輸入名稱和至多100的點數');
+            alert('樣本數不能小於1000');
         }
     });
-});
 
-// 更新自訂侍靈列表
+    // 新增自訂侍靈
+    document.getElementById('add-custom-spirit').addEventListener('click', () => {
+        const form = document.getElementById('custom-spirit-form');
+        form.style.display = 'block';
+        form.innerHTML = `
+            <div>
+                <input type="text" name="spirit-name" placeholder="名稱" required>
+                <input type="number" name="dice1" min="0" max="10" placeholder="點數1" required>
+                <input type="number" name="dice2" min="0" max="10" placeholder="點數2" required>
+                <input type="number" name="dice3" min="0" max="10" placeholder="點數3" required>
+                <input type="number" name="dice4" min="0" max="10" placeholder="點數4" required>
+                <input type="number" name="dice5" min="0" max="10" placeholder="點數5" required>
+                <input type="number" name="dice6" min="0" max="10" placeholder="點數6" required>
+                <button id="confirm-custom-spirit">確定新增侍靈</button>
+            </div>
+        `;
+
+        document.getElementById('confirm-custom-spirit').addEventListener('click', () => {
+            const spiritName = form.querySelector('input[name="spirit-name"]').value;
+            const diceValues = [
+                parseInt(form.querySelector('input[name="dice1"]').value),
+                parseInt(form.querySelector('input[name="dice2"]').value),
+                parseInt(form.querySelector('input[name="dice3"]').value),
+                parseInt(form.querySelector('input[name="dice4"]').value),
+                parseInt(form.querySelector('input[name="dice5"]').value),
+                parseInt(form.querySelector('input[name="dice6"]').value)
+            ];
+
+            if (spiritName && diceValues.every(val => !isNaN(val) && val >= 0 && val <= 100)) {
+                name.push(spiritName);
+                dice.push(diceValues);
+                rare.push(1);
+                form.style.display = 'none';
+                updateCustomSpiritList();
+                loadSpiritList();
+            } else {
+                alert('請輸入名稱和至多100的點數');
+            }
+        });
+    });
+
+    // 線上鬥靈功能
+    document.getElementById('login-submit').addEventListener('click', () => {
+        console.log('登入按鈕被點擊');
+        const username = document.getElementById('login-username').value;
+        const password = document.getElementById('login-password').value;
+        socket.emit('login', { username, password }, (response) => {
+            if (response.success) {
+                currentUser = username;
+                socket.emit('getCoins', { username }, (coins) => {
+                    currentCoins = coins;
+                    document.getElementById('login-page').style.display = 'none';
+                    document.getElementById('lobby-page').style.display = 'block';
+                    initLobbyPage();
+                    loadRoomList();
+                });
+            } else {
+                alert(response.message);
+            }
+        });
+    });
+
+    document.getElementById('show-register').addEventListener('click', () => {
+        console.log('顯示註冊按鈕被點擊');
+        document.getElementById('login-page').style.display = 'none';
+        document.getElementById('register-page').style.display = 'block';
+    });
+
+    document.getElementById('back-to-login').addEventListener('click', () => {
+        console.log('返回登入按鈕被點擊');
+        document.getElementById('register-page').style.display = 'none';
+        document.getElementById('login-page').style.display = 'block';
+    });
+
+    document.getElementById('register-submit').addEventListener('click', () => {
+        console.log('註冊按鈕被點擊');
+        const username = document.getElementById('register-username').value;
+        const password = document.getElementById('register-password').value;
+        const confirmPassword = document.getElementById('register-confirm-password').value;
+        if (password !== confirmPassword) {
+            alert('密碼與確認密碼不一致');
+            return;
+        }
+        socket.emit('register', { username, password }, (response) => {
+            alert(response.message);
+            if (response.success) {
+                document.getElementById('register-page').style.display = 'none';
+                document.getElementById('login-page').style.display = 'block';
+            }
+        });
+    });
+
+    document.getElementById('back-to-menu-from-lobby').addEventListener('click', () => {
+        document.getElementById('lobby-page').style.display = 'none';
+        document.getElementById('menu').style.display = 'block';
+    });
+
+    document.getElementById('create-room').addEventListener('click', () => {
+        document.getElementById('lobby-page').style.display = 'none';
+        document.getElementById('create-room-page').style.display = 'block';
+    });
+
+    document.getElementById('room-public').addEventListener('change', (e) => {
+        document.getElementById('room-password').style.display = e.target.value === 'true' ? 'block' : 'none';
+    });
+
+    document.getElementById('cancel-create').addEventListener('click', () => {
+        document.getElementById('create-room-page').style.display = 'none';
+        document.getElementById('lobby-page').style.display = 'block';
+    });
+
+    document.getElementById('confirm-create').addEventListener('click', () => {
+        const room = {
+            name: document.getElementById('room-name').value,
+            isPublic: document.getElementById('room-public').value === 'true',
+            password: document.getElementById('room-password').value,
+            limit: parseInt(document.getElementById('room-limit').value),
+            feedTime: parseInt(document.getElementById('feed-time').value),
+            betTime: parseInt(document.getElementById('bet-time').value),
+            owner: currentUser
+        };
+        socket.emit('createRoom', room, (response) => {
+            if (response.success) {
+                currentRoomId = response.roomId;
+                enterRoom(response.roomId);
+            } else {
+                alert(response.message);
+            }
+        });
+    });
+
+    document.getElementById('join-room').addEventListener('click', () => {
+        const roomId = document.getElementById('join-room-id').value;
+        socket.emit('joinRoom', { roomId, username: currentUser }, (response) => {
+            if (response.success) {
+                currentRoomId = roomId;
+                enterRoom(roomId);
+            } else {
+                alert(response.message);
+            }
+        });
+    });
+
+    document.getElementById('refresh-rooms').addEventListener('click', loadRoomList);
+
+    document.getElementById('back-to-lobby').addEventListener('click', () => {
+        socket.emit('leaveRoom', { roomId: currentRoomId, username: currentUser });
+        document.getElementById('room-page').style.display = 'none';
+        document.getElementById('lobby-page').style.display = 'block';
+        currentRoomId = null;
+    });
+
+    document.getElementById('start-game').addEventListener('click', () => {
+        socket.emit('startGame', currentRoomId);
+    });
+};
+
+// 以下是其他函數（保持不變）
 function updateCustomSpiritList() {
     const customList = document.getElementById('custom-spirit-list');
     customList.innerHTML = '';
@@ -162,7 +288,6 @@ function updateCustomSpiritList() {
     });
 }
 
-// 加載侍靈列表
 function loadSpiritList() {
     const spiritList = document.getElementById('spirit-list');
     spiritList.innerHTML = '';
@@ -180,7 +305,6 @@ function loadSpiritList() {
     });
 }
 
-// 選擇侍靈
 function selectSpirit(index) {
     if (selectedSpirits.includes(index)) {
         selectedSpirits = selectedSpirits.filter(i => i !== index);
@@ -195,7 +319,6 @@ function selectSpirit(index) {
     updateSelectedList();
 }
 
-// 更新已選擇列表
 function updateSelectedList() {
     const selectedList = document.getElementById('selected-list');
     selectedList.innerHTML = '';
@@ -268,8 +391,7 @@ function updateSelectedList() {
     });
 }
 
-// 開始計算
-document.getElementById('start-calculation').addEventListener('click', () => {
+function startCalculation() {
     if (selectedSpirits.length === 0) {
         alert('請至少選擇一個侍靈！');
         return;
@@ -279,9 +401,8 @@ document.getElementById('start-calculation').addEventListener('click', () => {
     loadCalculationSpirits();
     updateProgress(0);
     calculateWinRate();
-});
+}
 
-// 加載計算頁面的侍靈
 function loadCalculationSpirits() {
     const calcSpirits = document.getElementById('calculation-spirits');
     calcSpirits.innerHTML = '';
@@ -298,13 +419,11 @@ function loadCalculationSpirits() {
     });
 }
 
-// 更新計算進度
 function updateProgress(progress) {
     const progressText = document.getElementById('progress-text');
     progressText.textContent = `計算進度：${progress.toFixed(0)}%`;
 }
 
-// 計算勝率
 async function calculateWinRate() {
     const props = selectedSpirits.map((spiritIndex, i) => {
         const inputs = document.querySelectorAll('#selected-list .selected-item')[i].querySelectorAll('input');
@@ -378,7 +497,6 @@ async function calculateWinRate() {
     displayResults(wins, totalSimulations, props);
 }
 
-// 顯示結果
 function displayResults(wins, totalSimulations, props) {
     const resultDiv = document.createElement('div');
     resultDiv.classList.add('container');
@@ -481,108 +599,61 @@ function displayResults(wins, totalSimulations, props) {
     document.body.appendChild(resultDiv);
 }
 
-// 線上鬥靈功能（保留到「登入頁面置中」時的進展）
-document.getElementById('login-submit').addEventListener('click', () => {
-    const username = document.getElementById('login-username').value;
-    const password = document.getElementById('login-password').value;
-    socket.emit('login', { username, password }, (response) => {
-        if (response.success) {
-            currentUser = username;
-            document.getElementById('login-page').style.display = 'none';
-            document.getElementById('lobby-page').style.display = 'block';
-            loadRoomList();
-        } else {
-            alert(response.message);
-        }
-    });
-});
+function canCheckIn() {
+    if (!lastCheckIn) return true;
+    const last = new Date(parseInt(lastCheckIn));
+    const now = new Date();
+    const lastMidnight = new Date(last);
+    lastMidnight.setHours(0, 0, 0, 0);
+    const todayMidnight = new Date(now);
+    todayMidnight.setHours(0, 0, 0, 0);
+    return todayMidnight.getTime() > lastMidnight.getTime();
+}
 
-document.getElementById('show-register').addEventListener('click', () => {
-    document.getElementById('login-page').style.display = 'none';
-    document.getElementById('register-page').style.display = 'block';
-});
-
-document.getElementById('back-to-login').addEventListener('click', () => {
-    document.getElementById('register-page').style.display = 'none';
-    document.getElementById('login-page').style.display = 'block';
-});
-
-document.getElementById('register-submit').addEventListener('click', () => {
-    const username = document.getElementById('register-username').value;
-    const password = document.getElementById('register-password').value;
-    const confirmPassword = document.getElementById('register-confirm-password').value;
-    if (password !== confirmPassword) {
-        alert('密碼與確認密碼不一致');
-        return;
+function updateCoinsDisplay() {
+    const coinsDisplay = document.getElementById('coins-display');
+    if (coinsDisplay) {
+        coinsDisplay.textContent = `鬥靈幣: ${currentCoins}`;
     }
-    socket.emit('register', { username, password }, (response) => {
-        alert(response.message);
-        if (response.success) {
-            document.getElementById('register-page').style.display = 'none';
-            document.getElementById('login-page').style.display = 'block';
+}
+
+function initLobbyPage() {
+    const lobbyHeader = document.createElement('div');
+    lobbyHeader.classList.add('lobby-header');
+    lobbyHeader.innerHTML = `
+        <button id="daily-check-in">每日簽到</button>
+        <span id="coins-display">鬥靈幣: ${currentCoins}</span>
+    `;
+    const lobbyPage = document.getElementById('lobby-page');
+    lobbyPage.insertBefore(lobbyHeader, lobbyPage.firstChild);
+
+    const checkInButton = document.getElementById('daily-check-in');
+    if (canCheckIn()) {
+        checkInButton.disabled = false;
+        checkInButton.textContent = '每日簽到';
+    } else {
+        checkInButton.disabled = true;
+        checkInButton.textContent = '已簽到';
+    }
+
+    checkInButton.addEventListener('click', () => {
+        if (canCheckIn()) {
+            socket.emit('checkIn', { username: currentUser }, (response) => {
+                if (response.success) {
+                    currentCoins = response.coins;
+                    updateCoinsDisplay();
+                    lastCheckIn = Date.now();
+                    localStorage.setItem('lastCheckIn', lastCheckIn);
+                    checkInButton.disabled = true;
+                    checkInButton.textContent = '已簽到';
+                    alert('簽到成功！獲得 1000000 鬥靈幣');
+                } else {
+                    alert('簽到失敗');
+                }
+            });
         }
     });
-});
-
-document.getElementById('back-to-menu-from-lobby').addEventListener('click', () => {
-    document.getElementById('lobby-page').style.display = 'none';
-    document.getElementById('menu').style.display = 'block';
-});
-
-document.getElementById('create-room').addEventListener('click', () => {
-    document.getElementById('lobby-page').style.display = 'none';
-    document.getElementById('create-room-page').style.display = 'block';
-});
-
-document.getElementById('room-public').addEventListener('change', (e) => {
-    document.getElementById('room-password').style.display = e.target.value === 'true' ? 'block' : 'none';
-});
-
-document.getElementById('cancel-create').addEventListener('click', () => {
-    document.getElementById('create-room-page').style.display = 'none';
-    document.getElementById('lobby-page').style.display = 'block';
-});
-
-document.getElementById('confirm-create').addEventListener('click', () => {
-    const room = {
-        name: document.getElementById('room-name').value,
-        isPublic: document.getElementById('room-public').value === 'true',
-        password: document.getElementById('room-password').value,
-        limit: parseInt(document.getElementById('room-limit').value),
-        feedTime: parseInt(document.getElementById('feed-time').value),
-        betTime: parseInt(document.getElementById('bet-time').value),
-        owner: currentUser
-    };
-    socket.emit('createRoom', room, (response) => {
-        if (response.success) {
-            currentRoomId = response.roomId;
-            enterRoom(response.roomId);
-        } else {
-            alert(response.message);
-        }
-    });
-});
-
-document.getElementById('join-room').addEventListener('click', () => {
-    const roomId = document.getElementById('join-room-id').value;
-    socket.emit('joinRoom', { roomId, username: currentUser }, (response) => {
-        if (response.success) {
-            currentRoomId = roomId;
-            enterRoom(roomId);
-        } else {
-            alert(response.message);
-        }
-    });
-});
-
-document.getElementById('refresh-rooms').addEventListener('click', loadRoomList);
-
-document.getElementById('back-to-lobby').addEventListener('click', () => {
-    socket.emit('leaveRoom', { roomId: currentRoomId, username: currentUser });
-    document.getElementById('room-page').style.display = 'none';
-    document.getElementById('lobby-page').style.display = 'block';
-    currentRoomId = null;
-});
+}
 
 function loadRoomList() {
     socket.emit('getRooms', (rooms) => {
@@ -618,10 +689,6 @@ function enterRoom(roomId) {
         document.getElementById('start-game').style.display = room.owner === currentUser ? 'block' : 'none';
     });
 }
-
-document.getElementById('start-game').addEventListener('click', () => {
-    socket.emit('startGame', currentRoomId);
-});
 
 socket.on('gameStarted', (data) => {
     const spirits = data.spirits.map((idx) => ({
@@ -699,7 +766,8 @@ socket.on('updateProps', (data) => {
 });
 
 socket.on('updateCoins', (coins) => {
-    console.log(`你的鬥靈幣: ${coins}`);
+    currentCoins = coins;
+    updateCoinsDisplay();
 });
 
 function startBetPhase(betTime, spirits) {
@@ -785,8 +853,7 @@ async function startGamePhase(spirits) {
             }
             spirit.score += roll;
             spiritDiv.innerHTML = `${spirit.name}<br>積分: ${spirit.score}<br>下注: ${spirit.bets}`;
-            await new Promise(resolve => setTimeout(resolve, 5000)); // 5秒停頓
-
+            await new Promise(resolve => setTimeout(resolve, 5000));
             const maxScore = Math.max(...spirits.map(s => s.score));
             if (maxScore > 120) {
                 const winners = spirits.filter(s => s.score === maxScore);
