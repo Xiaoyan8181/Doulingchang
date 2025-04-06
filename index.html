@@ -66,73 +66,95 @@
 
     <!-- 登入畫面 -->
     <div id="login-page" class="container" style="display: none;">
-        <button id="back-to-menu-from-login" class="back-button">返回</button>
-        <div class="login-content">
-            <h2>登入</h2>
-            <div class="login-form">
-                <input type="text" id="login-username" placeholder="帳號">
-                <input type="password" id="login-password" placeholder="密碼">
-                <button id="login-submit">登入</button>
-                <button id="show-register">註冊</button>
-            </div>
-        </div>
+        <h1>登入</h1>
+        <p style="color: red;">密碼請設置非常用密碼</p>
+        <input type="text" id="login-username" placeholder="帳號">
+        <input type="password" id="login-password" placeholder="密碼">
+        <button id="login-submit">登入</button>
+        <button id="show-register">註冊帳號</button>
     </div>
 
     <!-- 註冊畫面 -->
     <div id="register-page" class="container" style="display: none;">
-        <button id="back-to-login" class="back-button">返回</button>
-        <div class="login-content">
-            <h2>註冊</h2>
-            <div class="register-form">
-                <input type="text" id="register-username" placeholder="帳號">
-                <input type="password" id="register-password" placeholder="密碼">
-                <button id="register-submit">註冊</button>
-            </div>
+        <h1>註冊帳號</h1>
+        <input type="text" id="register-username" placeholder="帳號名（可中文）">
+        <input type="password" id="register-password" placeholder="密碼">
+        <input type="password" id="register-confirm-password" placeholder="確認密碼">
+        <div>
+            <button id="back-to-login">返回</button>
+            <button id="register-submit">確認註冊</button>
         </div>
     </div>
 
     <!-- 鬥靈大廳 -->
     <div id="lobby-page" class="container" style="display: none;">
-        <div class="lobby-header">
-            <div id="username-display"></div>
-            <button id="daily-check-in">每日簽到</button>
-            <div id="coins-display">鬥靈幣: 0</div>
-        </div>
-        <div class="container" style="padding-top: 60px;">
-            <h1>大廳</h1>
-            <button onclick="showPage('create-room-page')">創建房間</button>
-            <h2>房間列表</h2>
-            <div id="room-list"></div>
+        <h1>鬥靈大廳</h1>
+        <div id="room-list"></div>
+        <div>
+            <button id="back-to-menu-from-lobby">返回</button>
+            <button id="create-room">創建房間</button>
+            <input type="text" id="join-room-id" placeholder="輸入房間號">
+            <button id="join-room">以房間號進入</button>
+            <button id="refresh-rooms">重新整理</button>
         </div>
     </div>
 
     <!-- 創建房間介面 -->
     <div id="create-room-page" class="container" style="display: none;">
         <h1>創建房間</h1>
-        <label>房間名稱</label>
-        <input type="text" id="room-name" placeholder="輸入房間名稱">
-        <label>房間模式</label>
-        <select id="room-mode">
-            <option value="1v1">1v1</option>
-            <option value="2v2">2v2</option>
-        </select>
-        <button onclick="createRoom()">創建</button>
-        <button onclick="showPage('lobby-page')">返回</button>
+        <input type="text" id="room-name" placeholder="房間名稱">
+        <label>是否開放：
+            <select id="room-public">
+                <option value="true">是</option>
+                <option value="false">否</option>
+            </select>
+        </label>
+        <input type="password" id="room-password" placeholder="房間密碼（可選）" style="display: none;">
+        <label>人數限制：
+            <select id="room-limit">
+                <option value="0">無限制</option>
+                <option value="30">30</option>
+                <option value="20">20</option>
+                <option value="10">10</option>
+                <option value="5">5</option>
+            </select>
+        </label>
+        <label>投餵道具時間：
+            <select id="feed-time">
+                <option value="10">10秒</option>
+                <option value="20">20秒</option>
+                <option value="30">30秒</option>
+                <option value="60">1分</option>
+                <option value="120">2分</option>
+                <option value="300">5分</option>
+                <option value="600">10分</option>
+            </select>
+        </label>
+        <label>下注時間：
+            <select id="bet-time">
+                <option value="10">10秒</option>
+                <option value="20">20秒</option>
+                <option value="30">30秒</option>
+                <option value="60">1分</option>
+                <option value="120">2分</option>
+                <option value="300">5分</option>
+                <option value="600">10分</option>
+            </select>
+        </label>
+        <div>
+            <button id="cancel-create">取消創建</button>
+            <button id="confirm-create">確定創建</button>
+        </div>
     </div>
 
     <!-- 房間遊戲介面 -->
     <div id="room-page" class="container" style="display: none;">
-        <div id="player-list">
-            <h3>房間成員</h3>
-            <ul id="player-list-content"></ul>
-        </div>
-        <div id="room-content">
-            <h1 id="room-title"></h1>
-            <div id="player-actions">
-                <button onclick="startGame()">開始遊戲</button>
-                <button onclick="leaveRoom()">離開房間</button>
-            </div>
-        </div>
+        <h1 id="room-title"></h1>
+        <div id="spirit-boxes" style="display: flex; justify-content: center; gap: 20px;"></div>
+        <div id="game-phase"></div>
+        <div id="player-actions"></div>
+        <button id="start-game" style="display: none;">開始</button>
+        <button id="back-to-lobby" style="margin-top: 20px;">返回大廳</button>
     </div>
 
     <script src="https://cdn.socket.io/4.5.0/socket.io.min.js"></script>
