@@ -12,7 +12,7 @@ const io = new Server(server, {
     }
 });
 
-const DATA_FILE = path.join('/tmp', 'users.json'); // 修改路徑為 /tmp/users.json
+const DATA_FILE = path.join('/tmp', 'users.json');
 let users = {};
 let rooms = {};
 let playerCoins = {};
@@ -43,7 +43,7 @@ loadUsers(() => {
                 callback({ success: false, message: '帳號名已註冊過' });
             } else {
                 users[username] = password;
-                playerCoins[username] = 1000;
+                playerCoins[username] = 10000000; // 修改：初始鬥靈幣為 10000000
                 saveUsers(() => {
                     callback({ success: true, message: '已成功註冊' });
                 });
@@ -57,6 +57,19 @@ loadUsers(() => {
             } else {
                 callback({ success: false, message: '帳號或密碼錯誤' });
             }
+        });
+
+        // 新增：獲取鬥靈幣數
+        socket.on('getCoins', ({ username }, callback) => {
+            callback(playerCoins[username] || 0);
+        });
+
+        // 新增：每日簽到
+        socket.on('checkIn', ({ username }, callback) => {
+            playerCoins[username] = (playerCoins[username] || 0) + 1000000; // 增加 1000000 鬥靈幣
+            saveUsers(() => {
+                callback({ success: true, coins: playerCoins[username] });
+            });
         });
 
         socket.on('getRooms', (callback) => {
