@@ -188,6 +188,11 @@ button:hover {
     flex-direction: column;
     align-items: center;
     gap: 15px;
+    min-height: 100vh; /* 確保頁面高度填滿視窗 */
+    justify-content: center; /* 垂直居中 */
+    width: 100%;
+    max-width: 400px; /* 限制最大寬度 */
+    margin: 0 auto; /* 左右居中 */
 }
 
 #settings-page label, #create-room-page label {
@@ -274,13 +279,16 @@ button:hover {
     justify-content: center;
 }
 
-
 .lobby-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
     padding: 10px;
     background-color: #f0f0f0;
+    width: 100%;
+    position: fixed;
+    top: 0;
+    left: 0;
 }
 
 #daily-check-in {
@@ -289,4 +297,45 @@ button:hover {
 
 #coins-display {
     font-weight: bold;
+}
+
+/* 新增：返回按鈕樣式 */
+.back-button {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    padding: 5px 10px;
+    font-size: 14px;
+}
+
+/* 新增：登入頁面內容容器 */
+.login-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+    width: 100%;
+    max-width: 300px; /* 限制內容寬度 */
+}
+
+/* 修改：登入表單樣式 */
+.login-form, .register-form {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+    background-color: #444;
+    padding: 20px;
+    border-radius: 5px;
+    border: 1px solid #666;
+    width: 100%;
+    max-width: 300px;
+}
+
+.login-form input, .login-form button, .register-form input, .register-form button {
+    margin: 5px 0;
+    padding: 8px;
+    width: 100%;
+    max-width: 200px;
+    box-sizing: border-box;
 }
