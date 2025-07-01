@@ -14,7 +14,8 @@ const Game = {
         uniqueIdCounter: 0,
         isGameActive: false,
         eventListenersAttached: false,
-        buyCount: 0, // 【新增】用於計算購買次數，以決定下次購買的成本
+        buyCount: 0,
+        goldSpent: 0, // 【新增】用於記錄總花費
     },
 
     // DOM 元素快取
@@ -47,7 +48,8 @@ const Game = {
         this.state.charactersOnBoard = 0;
         this.state.uniqueIdCounter = 0;
         this.state.isGameActive = false;
-        this.state.buyCount = 0; // 【修改】重置購買次數
+        this.state.buyCount = 0;
+        this.state.goldSpent = 0; // 【修改】重置總花費
         if (this.state.gameLoopInterval) {
             clearInterval(this.state.gameLoopInterval);
             this.state.gameLoopInterval = null;
@@ -61,6 +63,7 @@ const Game = {
     cacheDOMElements() {
         this.elements.goldDisplay = document.getElementById('gold-display');
         this.elements.gridLevelDisplay = document.getElementById('grid-level-display');
+        this.elements.incomeRateDisplay = document.getElementById('income-rate-display'); // 【新增】快取產出速率的元素
         this.elements.xpBar = document.getElementById('xp-bar-fill');
         this.elements.xpText = document.getElementById('xp-text');
         this.elements.gameGrid = document.getElementById('game-grid');
@@ -75,7 +78,8 @@ const Game = {
     renderInitialUI() {
         this.updateStatsUI();
         this.renderGrid();
-        this.updateBuyButtonText(); // 【新增】初始化購買按鈕的文字
+        this.updateBuyButtonText();
+        this.updateIncomeRateDisplay(); // 【新增】初始化產出速率顯示
     },
     
     // 更新頂部狀態 UI
@@ -88,7 +92,7 @@ const Game = {
         this.elements.xpText.textContent = `${this.state.currentXP} / ${this.state.xpToNextLevel}`;
     },
 
-    // 【新增】更新購買按鈕的價格顯示
+    // 更新購買按鈕的價格顯示
     updateBuyButtonText() {
         if (!this.elements.buyButton) return;
         const nextCost = this.state.buyCount * 10;
@@ -97,6 +101,18 @@ const Game = {
         } else {
             this.elements.buyButton.textContent = `購買角色 (${nextCost} 金幣)`;
         }
+    },
+
+    // 【新增】更新每秒產出顯示
+    updateIncomeRateDisplay() {
+        if (!this.elements.incomeRateDisplay) return;
+        let currentIncome = 0;
+        this.state.grid.forEach(char => {
+            if (char) {
+                currentIncome += Math.pow(char.level, 2) - 1;
+            }
+        });
+        this.elements.incomeRateDisplay.textContent = currentIncome;
     },
 
     renderGrid() {
@@ -142,7 +158,6 @@ const Game = {
     setupEventListeners() {
         if (!this.elements.buyButton || !this.elements.gameGrid) return;
         this.elements.buyButton.addEventListener('click', this.handleBuy.bind(this));
-        // ... (拖曳事件監聽器不變) ...
         let dragSrcElement = null;
         this.elements.gameGrid.addEventListener('dragstart', (e) => { if (this.state.isGameActive && e.target.classList.contains('character')) { dragSrcElement = e.target; e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/html', e.target.innerHTML); setTimeout(() => e.target.classList.add('dragging'), 0); } });
         this.elements.gameGrid.addEventListener('dragover', (e) => { if (this.state.isGameActive) e.preventDefault(); });
@@ -152,11 +167,9 @@ const Game = {
         this.elements.gameGrid.addEventListener('dragend', (e) => { if (dragSrcElement) { dragSrcElement.classList.remove('dragging'); dragSrcElement = null; } });
     },
 
-    // 【新增】根據新規則計算加權隨機等級
     getWeightedRandomLevel() {
         const gl = this.state.gridLevel;
         let weights = [];
-        
         weights.push({ level: 1, weight: 20 });
         if (gl >= 2) { weights.push({ level: 2, weight: 3 + 2 * (gl - 2) }); }
         if (gl >= 5) { weights.push({ level: 3, weight: 5 + 2 * (gl - 5) }); }
@@ -168,23 +181,18 @@ const Game = {
             let w5 = (gl < 16) ? (5 + 1 * (gl - 12)) : (8 + 2 * (gl - 15));
             weights.push({ level: 5, weight: w5 });
         }
-        
         const totalWeight = weights.reduce((sum, item) => sum + item.weight, 0);
         let random = Math.random() * totalWeight;
-        
         for (const item of weights) {
             if (random < item.weight) return item.level;
             random -= item.weight;
         }
-        return weights[weights.length - 1].level; // Fallback
+        return weights[weights.length - 1].level;
     },
 
-    // 【重大修改】處理購買按鈕邏輯
     handleBuy() {
         if (!this.state.isGameActive) return;
-
         const cost = this.state.buyCount * 10;
-
         if (this.state.gold < cost) {
             alert("金幣不足！");
             return;
@@ -195,7 +203,8 @@ const Game = {
         }
 
         this.state.gold -= cost;
-        this.state.buyCount++; // 增加購買次數
+        this.state.goldSpent += cost; // 【修改】記錄花費
+        this.state.buyCount++;
         
         let emptyCells = [];
         this.state.grid.forEach((cell, index) => {
@@ -203,24 +212,19 @@ const Game = {
         });
         
         const randomIndex = emptyCells[Math.floor(Math.random() * emptyCells.length)];
-        
-        const characterLevel = this.getWeightedRandomLevel(); // 使用加權隨機
-        
-        const newCharacter = {
-            level: characterLevel,
-            id: `char-${this.state.uniqueIdCounter++}`
-        };
+        const characterLevel = this.getWeightedRandomLevel();
+        const newCharacter = { level: characterLevel, id: `char-${this.state.uniqueIdCounter++}` };
 
         this.state.grid[randomIndex] = newCharacter;
         this.state.charactersOnBoard++;
 
         this.updateStatsUI();
         this.renderGrid();
-        this.updateBuyButtonText(); // 更新下次購買的價格顯示
+        this.updateBuyButtonText();
+        this.updateIncomeRateDisplay(); // 【新增】購買後更新產出顯示
     },
 
     handleDrop(draggedElement, dropTarget) {
-        // ... (此函式不變) ...
         const srcIndex = parseInt(draggedElement.parentElement.dataset.index, 10);
         const destCell = dropTarget.closest('.grid-cell');
         if (!destCell) return;
@@ -238,10 +242,10 @@ const Game = {
             [this.state.grid[srcIndex], this.state.grid[destIndex]] = [this.state.grid[destIndex], this.state.grid[srcIndex]];
         }
         this.renderGrid();
+        this.updateIncomeRateDisplay(); // 【新增】拖曳合成後更新產出顯示
     },
     
     addXP(amount) {
-        // ... (此函式不變) ...
         this.state.currentXP += amount;
         while (this.state.currentXP >= this.state.xpToNextLevel) {
             this.state.currentXP -= this.state.xpToNextLevel;
@@ -253,7 +257,6 @@ const Game = {
     },
     
     checkGridExpansion() {
-        // ... (此函式不變) ...
         let newSize = this.state.gridSize;
         if (this.state.gridLevel >= 30) newSize = 7;
         else if (this.state.gridLevel >= 20) newSize = 6;
@@ -289,16 +292,14 @@ const Game = {
         let totalCharacterValue = 0;
         this.state.grid.forEach(char => {
             if (char) {
-                // 角色價值 = 每秒產出的金幣
                 totalCharacterValue += Math.pow(char.level, 2) - 1;
             }
         });
-        // 總分 = 金幣 + 角色總價值
-        return this.state.gold + totalCharacterValue;
+        // 總分 = 當前金幣 + 角色總價值 + 總花費
+        return this.state.gold + totalCharacterValue + this.state.goldSpent;
     },
 
     updateTimer(timeLeft) {
-        // ... (此函式不變) ...
         if (!this.elements.gameTimer) return;
         if (timeLeft < 0) timeLeft = 0;
         const minutes = Math.floor(timeLeft / 60);
@@ -307,7 +308,6 @@ const Game = {
     },
 
     updateScoreboard(scores = []) {
-        // ... (此函式不變) ...
         if (!this.elements.scoreboardList) return;
         this.elements.scoreboardList.innerHTML = '';
         scores.forEach((player, index) => {
@@ -321,7 +321,6 @@ const Game = {
     },
 
     endGame(finalScores) {
-        // ... (此函式不變) ...
         this.state.isGameActive = false;
         if (this.state.gameLoopInterval) { clearInterval(this.state.gameLoopInterval); this.state.gameLoopInterval = null; }
         if (this.elements.buyButton) { this.elements.buyButton.disabled = true; }
