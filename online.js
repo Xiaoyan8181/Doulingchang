@@ -1,7 +1,6 @@
-// --- 線上鬥靈功能 (V3.2 - 修正錯誤處理) ---
+// --- 線上鬥靈功能 (V3.3 - 頁面管理重構版) ---
 
 // Socket.IO 連線
-// 初始連線時 auth 為空
 const socket = io('https://fog-erratic-paw.glitch.me', { auth: {} }); 
 let isSocketConnected = false; 
 let currentUser = null;
@@ -9,8 +8,41 @@ let isAdmin = false;
 let currentRoomId = null;
 let currentRoomOwner = null; 
 
+// 將所有主要頁面容器的ID存成陣列，方便管理
+const pageIds = ['login-page', 'register-page', 'lobby-page', 'create-room-page', 'room-page', 'game-page'];
+const loadingPopup = document.getElementById('loading-popup');
+
+/**
+ * 新增：一個專門用來切換頁面的函式
+ * @param {string} pageIdToShow 要顯示的頁面的ID
+ */
+function showPage(pageIdToShow) {
+    // 先隱藏所有頁面
+    pageIds.forEach(id => {
+        const page = document.getElementById(id);
+        if (page) {
+            page.style.display = 'none';
+        }
+    });
+    // 然後只顯示指定的頁面
+    const targetPage = document.getElementById(pageIdToShow);
+    if (targetPage) {
+        targetPage.style.display = 'block'; // 使用 block 或 flex 取決於頁面佈局
+        if (targetPage.classList.contains('page-layout')) {
+             targetPage.style.display = 'flex';
+        }
+    }
+}
+
+
 document.addEventListener('DOMContentLoaded', (event) => {
-    const loadingPopup = document.getElementById('loading-popup');
+
+    // 初始狀態下，所有頁面都應該是隱藏的，除了載入畫面
+    pageIds.forEach(id => {
+        const page = document.getElementById(id);
+        if (page) page.style.display = 'none';
+    });
+    loadingPopup.style.display = 'flex';
     
     // Socket.IO 連線事件監聽器
     socket.on('connect', () => {
@@ -18,7 +50,7 @@ document.addEventListener('DOMContentLoaded', (event) => {
         isSocketConnected = true;
         if (!currentUser) {
             loadingPopup.style.display = 'none'; 
-            document.getElementById('login-page').style.display = 'block';
+            showPage('login-page');
         }
     });
 
@@ -28,9 +60,7 @@ document.addEventListener('DOMContentLoaded', (event) => {
         alert('與伺服器斷線，正在嘗試重新連接...');
     });
     
-    // --- 修正：更完整的錯誤處理 ---
     socket.on('connect_error', (err) => {
-        // 如果是驗證錯誤，表示 token 過期或無效
         if (err.message === "Authentication error") {
             console.error('驗證錯誤，請重新登入');
             currentUser = null;
@@ -38,9 +68,7 @@ document.addEventListener('DOMContentLoaded', (event) => {
             alert('您的登入已過期，請重新登入。');
             window.location.reload();
         } else {
-            // 對於其他所有連線錯誤 (例如伺服器未啟動)
             console.error('連線錯誤:', err.message);
-            // 隱藏載入畫面，並顯示錯誤提示，避免卡住
             loadingPopup.style.display = 'none'; 
             alert(`無法連接到伺服器，請確認伺服器狀態或稍後再試。\n錯誤訊息: ${err.message}`);
         }
@@ -50,7 +78,7 @@ document.addEventListener('DOMContentLoaded', (event) => {
         alert(message);
         isSocketConnected = false;
         currentUser = null;
-        socket.auth = {}; // 清除 token
+        socket.auth = {};
         socket.disconnect();
         window.location.reload();
     });
@@ -89,9 +117,7 @@ document.addEventListener('DOMContentLoaded', (event) => {
     socket.on('roomClosed', (closedRoomId) => {
         if (currentRoomId === closedRoomId) {
             alert('房間已關閉');
-            document.getElementById('game-page').style.display = 'none';
-            document.getElementById('room-page').style.display = 'none';
-            document.getElementById('lobby-page').style.display = 'block';
+            showPage('lobby-page');
             currentRoomId = null;
             currentRoomOwner = null;
             loadRoomList();
@@ -105,8 +131,7 @@ document.addEventListener('DOMContentLoaded', (event) => {
     
     socket.on('kicked', () => {
         alert('你已被房主踢掉');
-        document.getElementById('room-page').style.display = 'none';
-        document.getElementById('lobby-page').style.display = 'block';
+        showPage('lobby-page');
         currentRoomId = null;
         currentRoomOwner = null;
         loadRoomList();
@@ -115,14 +140,14 @@ document.addEventListener('DOMContentLoaded', (event) => {
     socket.on('gameStarted', (gameData) => {
         console.log("伺服器發送了遊戲開始信號！", gameData);
         if (typeof Game !== 'undefined' && typeof Game.init === 'function') {
+            showPage('game-page');
             Game.init();
         } else {
             console.error("Game object or Game.init function not found! 請確認 merge-game.js 已正確載入。");
         }
     });
-    // ------------------------------------------------
 
-    // ================== 事件監聽器 ==================
+    // ================== 事件監聽器（使用 showPage 函式重構） ==================
     document.getElementById('login-submit').addEventListener('click', () => {
         const username = document.getElementById('login-username').value;
         const password = document.getElementById('login-password').value;
@@ -133,8 +158,7 @@ document.addEventListener('DOMContentLoaded', (event) => {
                 socket.auth = { token: response.token };
                 socket.disconnect();
                 socket.connect();
-                document.getElementById('login-page').style.display = 'none';
-                document.getElementById('lobby-page').style.display = 'block';
+                showPage('lobby-page');
                 loadRoomList();
             } else {
                 alert(response.message);
@@ -143,13 +167,11 @@ document.addEventListener('DOMContentLoaded', (event) => {
     });
 
     document.getElementById('show-register').addEventListener('click', () => {
-        document.getElementById('login-page').style.display = 'none';
-        document.getElementById('register-page').style.display = 'block';
+        showPage('register-page');
     });
 
     document.getElementById('back-to-login').addEventListener('click', () => {
-        document.getElementById('register-page').style.display = 'none';
-        document.getElementById('login-page').style.display = 'block';
+        showPage('login-page');
     });
 
     document.getElementById('register-submit').addEventListener('click', () => {
@@ -163,8 +185,7 @@ document.addEventListener('DOMContentLoaded', (event) => {
         socket.emit('register', { username, password }, (response) => {
             alert(response.message);
             if (response.success) {
-                document.getElementById('register-page').style.display = 'none';
-                document.getElementById('login-page').style.display = 'block';
+                showPage('login-page');
             }
         });
     });
@@ -177,18 +198,11 @@ document.addEventListener('DOMContentLoaded', (event) => {
     });
 
     document.getElementById('create-room').addEventListener('click', () => {
-        document.getElementById('lobby-page').style.display = 'none';
-        document.getElementById('create-room-page').style.display = 'block';
+        showPage('create-room-page');
     });
-
-    document.getElementById('room-public').addEventListener('change', (e) => {
-        document.getElementById('room-password').style.display = e.target.value === 'true' ? 'block' : 'none';
-    });
-    document.getElementById('room-password').style.display = document.getElementById('room-public').value === 'true' ? 'block' : 'none';
 
     document.getElementById('cancel-create').addEventListener('click', () => {
-        document.getElementById('create-room-page').style.display = 'none';
-        document.getElementById('lobby-page').style.display = 'block';
+        showPage('lobby-page');
     });
 
     document.getElementById('confirm-create').addEventListener('click', () => {
@@ -221,12 +235,12 @@ document.addEventListener('DOMContentLoaded', (event) => {
             if (!room) {
                 return alert('房間不存在');
             }
-            if (room.isPublic && room.password) {
-                const joinPassword = prompt('請輸入房間密碼:');
+            if (!room.isPublic) {
+                const joinPassword = prompt('此為私人房間，請輸入房間密碼:');
                 if (joinPassword === null) return;
                 tryJoinRoom(roomId, joinPassword);
-            } else if (!room.isPublic){
-                const joinPassword = prompt('此為私人房間，請輸入房間密碼:');
+            } else if (room.password) {
+                const joinPassword = prompt('請輸入房間密碼:');
                 if (joinPassword === null) return;
                 tryJoinRoom(roomId, joinPassword);
             } else {
@@ -244,9 +258,7 @@ document.addEventListener('DOMContentLoaded', (event) => {
             }
         }
         socket.emit('leaveRoom', { roomId: currentRoomId });
-        document.getElementById('game-page').style.display = 'none';
-        document.getElementById('room-page').style.display = 'none';
-        document.getElementById('lobby-page').style.display = 'block';
+        showPage('lobby-page');
         currentRoomId = null;
         currentRoomOwner = null;
         loadRoomList();
@@ -262,7 +274,7 @@ document.addEventListener('DOMContentLoaded', (event) => {
     });
 
     // ================== 功能函式 ==================
-
+    // ... 其他功能函式保持不變 ...
     function tryJoinRoom(roomId, password) {
         socket.emit('joinRoom', { roomId, password }, (response) => {
             if (response.success) {
@@ -287,7 +299,7 @@ document.addEventListener('DOMContentLoaded', (event) => {
                 const roomDiv = document.createElement('div');
                 roomDiv.className = 'room-item';
                 roomDiv.id = `room-${id}`;
-                let headerHTML = (room.isPublic && room.password) ? '<span>🔑 </span>' : '';
+                let headerHTML = (room.password) ? '<span>🔑 </span>' : '';
                 headerHTML += room.name;
                 roomDiv.innerHTML = `
                     <div class="room-item-header">${headerHTML}</div>
@@ -298,7 +310,11 @@ document.addEventListener('DOMContentLoaded', (event) => {
                     </div>
                 `;
                 roomDiv.querySelector('.join-btn').addEventListener('click', () => {
-                    if (room.isPublic && room.password) {
+                     if (!room.isPublic) {
+                        const joinPassword = prompt('此為私人房間，請輸入房間密碼:');
+                        if (joinPassword === null) return;
+                        tryJoinRoom(id, joinPassword);
+                    } else if (room.password) {
                         const joinPassword = prompt('請輸入房間密碼:');
                         if (joinPassword === null) return;
                         tryJoinRoom(id, joinPassword);
@@ -363,9 +379,7 @@ document.addEventListener('DOMContentLoaded', (event) => {
     }
 
     function enterRoom(roomId) {
-        document.getElementById('create-room-page').style.display = 'none';
-        document.getElementById('lobby-page').style.display = 'none';
-        document.getElementById('room-page').style.display = 'block';
+        showPage('room-page');
         socket.emit('getRoomInfo', roomId, (room) => {
             if(room) {
                 currentRoomOwner = room.owner;
@@ -375,8 +389,7 @@ document.addEventListener('DOMContentLoaded', (event) => {
                 updateInRoomPlayerList(room.players);
             } else {
                 alert('無法獲取房間資訊，可能已被關閉。');
-                document.getElementById('room-page').style.display = 'none';
-                document.getElementById('lobby-page').style.display = 'block';
+                showPage('lobby-page');
                 currentRoomId = null;
                 currentRoomOwner = null;
             }
