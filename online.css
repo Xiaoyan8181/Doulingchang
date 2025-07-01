@@ -1,0 +1,191 @@
+/* --- 線上鬥靈專用樣式 --- */
+
+/* 登入和註冊頁面調整 */
+#login-page, #register-page {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+    padding-top: 20px; /* 增加一點頂部空間 */
+}
+
+/* 新增：用於包裝輸入框的容器 */
+.form-group {
+    width: 100%;
+    text-align: center;
+}
+
+#login-page input, #register-page input, #join-room-id {
+    padding: 8px; /* 增加內距 */
+    font-size: 16px;
+    width: 250px; /* 統一寬度 */
+    box-sizing: border-box; /* 確保 padding 不會影響總寬度 */
+}
+
+/* 新增：用於包裝按鈕的容器 */
+.button-group {
+    display: flex;
+    flex-direction: column; /* 按鈕垂直排列 */
+    gap: 10px; /* 按鈕之間的間距 */
+    align-items: center;
+    width: 100%;
+    margin-top: 10px; /* 與上方元素間距 */
+}
+
+.button-group button {
+    width: 250px; /* 讓按鈕與輸入框同寬 */
+    box-sizing: border-box;
+}
+
+/* 讓註冊頁的兩個按鈕並排 */
+.button-group.register-buttons {
+    flex-direction: row; /* 水平排列 */
+    justify-content: center; /* 居中 */
+    gap: 20px;
+}
+
+.button-group.register-buttons button {
+    width: 115px; /* 調整寬度以並排 */
+}
+
+
+/* 佈局 */
+.page-layout {
+    display: flex;
+    gap: 20px;
+    align-items: flex-start;
+}
+
+.sidebar {
+    flex-shrink: 0;
+    width: 200px;
+    background-color: #2c2c2c;
+    padding: 15px;
+    border-radius: 8px;
+    border: 1px solid #444;
+    max-height: 70vh;
+    overflow-y: auto;
+}
+
+.sidebar h2 {
+    margin-top: 0;
+    text-align: center;
+    border-bottom: 1px solid #555;
+    padding-bottom: 10px;
+}
+
+#online-players-list, #in-room-players-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.player-list-item {
+    background-color: #3a3a3a;
+    padding: 8px;
+    border-radius: 4px;
+    color: #ddd;
+}
+
+.main-content {
+    flex-grow: 1;
+}
+
+/* 房間列表 */
+.room-list-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 15px;
+    min-height: 50vh;
+    background-color: rgba(0,0,0,0.2);
+    padding: 15px;
+    border-radius: 8px;
+}
+
+.room-item {
+    padding: 15px;
+    background-color: #444;
+    border: 1px solid #666;
+    border-radius: 5px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    text-align: left;
+    transition: background-color 0.2s, border-color 0.2s;
+}
+.room-item:hover {
+    background-color: #555;
+    border-color: #888;
+}
+
+.room-item-header {
+    font-weight: bold;
+    font-size: 1.1em;
+    margin-bottom: 10px;
+}
+.room-item-players {
+    font-size: 0.9em;
+    color: #ccc;
+    margin-bottom: 10px;
+}
+.room-item-actions {
+    margin-top: auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.room-item-actions .join-btn {
+    background-color: #4CAF50;
+}
+.room-item-actions .join-btn:hover {
+    background-color: #45a049;
+}
+
+.admin-close-btn {
+    background-color: #a00;
+    font-size: 12px;
+    padding: 3px 8px;
+}
+.admin-close-btn:hover {
+    background-color: #c00;
+}
+
+.lobby-actions {
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid #555;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+/* 載入彈窗 */
+.loading-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.6);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+}
+
+.loading-box {
+    background-color: #444;
+    padding: 20px 40px;
+    border-radius: 10px;
+    border: 1px solid #666;
+    text-align: center;
+    color: #fff;
+}
+
+#loading-text {
+    font-size: 18px;
+    margin: 0;
+}
