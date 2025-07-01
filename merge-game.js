@@ -241,11 +241,10 @@ const Game = {
             this.state.charactersOnBoard--;
             this.addXP(newLevel);
             
-            // 【新增】觸發合併閃光效果
             destCell.classList.add('merge-flash');
             setTimeout(() => {
                 destCell.classList.remove('merge-flash');
-            }, 400); // 移除 class 的時間應與 CSS 動畫時間匹配
+            }, 400);
 
         } else {
             [this.state.grid[srcIndex], this.state.grid[destIndex]] = [this.state.grid[destIndex], this.state.grid[srcIndex]];
