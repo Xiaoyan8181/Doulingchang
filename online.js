@@ -16,12 +16,8 @@ document.addEventListener('DOMContentLoaded', (event) => {
         console.log('成功連接到伺服器！ID:', socket.id);
         isSocketConnected = true;
         if (!currentUser) {
-            // 第一次連接時，隱藏載入畫面並顯示登入頁
-            const loginPage = document.getElementById('login-page');
-            if (loginPage) {
-                loadingPopup.style.display = 'none';
-                loginPage.style.display = 'block';
-            }
+            loadingPopup.style.display = 'none';
+            document.getElementById('login-page').style.display = 'block';
         }
     });
 
@@ -58,9 +54,8 @@ document.addEventListener('DOMContentLoaded', (event) => {
     socket.on('roomClosed', (closedRoomId) => {
         if (currentRoomId === closedRoomId) {
             alert('房間已關閉');
-            const resultsPopup = document.getElementById('results-popup');
-            if (resultsPopup && resultsPopup.style.display === 'flex') {
-                resultsPopup.style.display = 'none';
+            if (document.getElementById('results-popup').style.display === 'flex') {
+                document.getElementById('results-popup').style.display = 'none';
             }
             navigateToLobby();
         } else {
@@ -80,68 +75,31 @@ document.addEventListener('DOMContentLoaded', (event) => {
     socket.on('scoreboardUpdate', (scores) => Game.updateScoreboard(scores));
     socket.on('gameEnded', handleGameEnd);
 
-    // 【新增】監聽經典模式的狀態更新
-    socket.on('classic:stateUpdate', (state) => {
-        if (typeof ClassicGame !== 'undefined' && document.getElementById('classic-game-page').style.display !== 'none') {
-            ClassicGame.render(state);
-        }
-    });
-
-    // 【新增】監聽經典模式的錯誤訊息
-    socket.on('classic:error', (message) => {
-        alert(message);
-    });
-
-
     // ================== 頁面元素事件監聽器 ==================
-    // 確保所有元素都存在再綁定事件
-    const elementsToBind = {
-        'login-submit': login,
-        'show-register': () => showPage('register-page'),
-        'back-to-login': () => showPage('login-page'),
-        'register-submit': register,
-        'back-to-menu-from-lobby': logout,
-        'create-room': () => {
-            showPage('create-room-page');
-            toggleCreateRoomOptions();
-        },
-        'cancel-create': () => showPage('lobby-page'),
-        'confirm-create': createRoom,
-        'join-room': joinRoomById,
-        'refresh-rooms': loadRoomList,
-        'back-to-lobby': leaveRoom,
-        'start-game': () => socket.emit('startGame', currentRoomId),
-        'back-to-room-btn': returnToRoomFromGame,
-        'leave-game-btn': handleLeaveGame,
-    };
-
-    for (const id in elementsToBind) {
-        const element = document.getElementById(id);
-        if (element) {
-            element.addEventListener('click', elementsToBind[id]);
-        }
-    }
+    document.getElementById('login-submit').addEventListener('click', login);
+    document.getElementById('show-register').addEventListener('click', () => showPage('register-page'));
+    document.getElementById('back-to-login').addEventListener('click', () => showPage('login-page'));
+    document.getElementById('register-submit').addEventListener('click', register);
+    document.getElementById('back-to-menu-from-lobby').addEventListener('click', logout);
+    document.getElementById('create-room').addEventListener('click', () => {
+        showPage('create-room-page');
+        toggleCreateRoomOptions();
+    });
+    document.getElementById('cancel-create').addEventListener('click', () => showPage('lobby-page'));
+    document.getElementById('confirm-create').addEventListener('click', createRoom);
+    document.getElementById('join-room').addEventListener('click', joinRoomById);
+    document.getElementById('refresh-rooms').addEventListener('click', loadRoomList);
+    document.getElementById('back-to-lobby').addEventListener('click', leaveRoom);
+    document.getElementById('start-game').addEventListener('click', () => socket.emit('startGame', currentRoomId));
+    document.getElementById('back-to-room-btn').addEventListener('click', returnToRoomFromGame);
+    document.getElementById('leave-game-btn').addEventListener('click', handleLeaveGame);
     
-    const roomPublicSelect = document.getElementById('room-public');
-    if (roomPublicSelect) {
-        roomPublicSelect.addEventListener('change', (e) => {
-            const roomPasswordInput = document.getElementById('room-password');
-            if (roomPasswordInput) {
-                roomPasswordInput.style.display = e.target.value === 'false' ? 'block' : 'none';
-            }
-        });
-        // 初始化密碼框狀態
-        const roomPasswordInput = document.getElementById('room-password');
-        if (roomPasswordInput) {
-            roomPasswordInput.style.display = roomPublicSelect.value === 'false' ? 'block' : 'none';
-        }
-    }
+    document.getElementById('room-public').addEventListener('change', (e) => {
+        document.getElementById('room-password').style.display = e.target.value === 'true' ? 'block' : 'none';
+    });
+    document.getElementById('room-password').style.display = 'none';
 
-    const gameModeSelect = document.getElementById('room-game-mode');
-    if (gameModeSelect) {
-        gameModeSelect.addEventListener('change', toggleCreateRoomOptions);
-    }
-    
+    document.getElementById('room-game-mode').addEventListener('change', toggleCreateRoomOptions);
 
     // ================== 功能函式 ==================
 
@@ -163,12 +121,9 @@ document.addEventListener('DOMContentLoaded', (event) => {
     }
 
     function showPage(pageId) {
-        const pages = ['login-page', 'register-page', 'lobby-page', 'create-room-page', 'room-page', 'game-page', 'classic-game-page'];
+        const pages = ['login-page', 'register-page', 'lobby-page', 'create-room-page', 'room-page', 'game-page'];
         pages.forEach(id => {
-            const pageElement = document.getElementById(id);
-            if (pageElement) {
-                pageElement.style.display = (id === pageId) ? ( (id.includes('page-layout') || id.includes('game-page')) ? 'flex' : 'block' ) : 'none';
-            }
+            document.getElementById(id).style.display = (id === pageId) ? ( (id === 'lobby-page' || id === 'room-page' || id === 'game-page') ? 'flex' : 'block' ) : 'none';
         });
     }
 
@@ -213,6 +168,7 @@ document.addEventListener('DOMContentLoaded', (event) => {
         });
     }
     
+    // 【重大修正】此函式已更新，以正確處理遊戲模式和時間
     function createRoom() {
         const gameMode = document.getElementById('room-game-mode').value;
         const isPublic = document.getElementById('room-public').value === 'true';
@@ -220,7 +176,7 @@ document.addEventListener('DOMContentLoaded', (event) => {
         const room = {
             name: document.getElementById('room-name').value || `玩家 ${currentUser} 的房間`,
             isPublic: isPublic,
-            password: !isPublic ? document.getElementById('room-password').value : null,
+            password: isPublic ? (document.getElementById('room-password').value || null) : null,
             limit: parseInt(document.getElementById('room-limit').value),
             status: 'open',
             gameMode: gameMode, 
@@ -262,7 +218,9 @@ document.addEventListener('DOMContentLoaded', (event) => {
             if (needsPassword) {
                 const promptMessage = !room.isPublic ? '此為私人房間，請輸入房間密碼:' : '請輸入房間密碼:';
                 const password = prompt(promptMessage);
-                if (password === null) return;
+                if (password === null) {
+                    return;
+                }
                 tryJoinRoom(roomId, password);
             } else {
                 tryJoinRoom(roomId, null);
@@ -288,10 +246,7 @@ document.addEventListener('DOMContentLoaded', (event) => {
                 currentRoomOwner = room.owner;
                 document.getElementById('room-title').textContent = room.name;
                 document.getElementById('room-id-display').textContent = `房號: ${roomId}`;
-                const startGameBtn = document.getElementById('start-game');
-                if (startGameBtn) {
-                    startGameBtn.style.display = room.owner === currentUser ? 'block' : 'none';
-                }
+                document.getElementById('start-game').style.display = room.owner === currentUser ? 'block' : 'none';
                 updateInRoomPlayerList(room.players);
             } else {
                 alert('無法獲取房間資訊，可能已被關閉。');
@@ -314,7 +269,7 @@ document.addEventListener('DOMContentLoaded', (event) => {
     function leaveRoom() {
         if (!currentRoomId) return;
 
-        const isGamePlaying = document.getElementById('game-page').style.display === 'flex' || document.getElementById('classic-game-page').style.display === 'flex';
+        const isGamePlaying = document.getElementById('game-page').style.display === 'flex';
         if (!isGamePlaying && currentUser === currentRoomOwner) {
             if (!confirm('您是房主，離開將會關閉房間，確定嗎？')) return;
         }
@@ -331,29 +286,21 @@ document.addEventListener('DOMContentLoaded', (event) => {
     }
     
     function handleGameStart(gameData) {
-        console.log("處理遊戲開始...", gameData);
-
-        if (gameData.gameMode === 'merge') {
-            showPage('game-page');
-            Game.init();
-            
-            if (!gameData.initialTime || gameData.initialTime <= 0) {
-                document.getElementById('game-timer').textContent = "∞";
-            } else {
-                Game.updateTimer(gameData.initialTime);
-            }
-
-            scoreUpdateInterval = setInterval(() => {
-                if (isSocketConnected) {
-                    socket.emit('updateScore', { score: Game.getScore() });
-                }
-            }, 1000);
-
-        } else { // 預設或 'classic'
-            showPage('classic-game-page');
-            gameData.currentUser = currentUser;
-            ClassicGame.init(gameData);
+        console.log("處理遊戲開始...");
+        showPage('game-page');
+        Game.init();
+        
+        if (!gameData || !gameData.initialTime || gameData.initialTime <= 0) {
+            document.getElementById('game-timer').textContent = "∞";
+        } else {
+            Game.updateTimer(gameData.initialTime);
         }
+
+        scoreUpdateInterval = setInterval(() => {
+            if (isSocketConnected) {
+                socket.emit('updateScore', { score: Game.getScore() });
+            }
+        }, 1000);
     }
 
     function handleGameEnd(finalScores) {
@@ -364,12 +311,8 @@ document.addEventListener('DOMContentLoaded', (event) => {
     }
     
     function returnToRoomFromGame() {
-        const resultsPopup = document.getElementById('results-popup');
-        if (resultsPopup) resultsPopup.style.display = 'none';
-        
-        const buyBtn = document.getElementById('buy-character-btn');
-        if (buyBtn) buyBtn.disabled = false;
-        
+        document.getElementById('results-popup').style.display = 'none';
+        document.getElementById('buy-character-btn').disabled = false;
         showPage('room-page');
         if(currentRoomId) {
             enterRoom(currentRoomId);
@@ -430,7 +373,6 @@ document.addEventListener('DOMContentLoaded', (event) => {
     function loadRoomList() {
         socket.emit('getRooms', (rooms) => {
             const roomListDiv = document.getElementById('public-room-list');
-            if (!roomListDiv) return;
             roomListDiv.innerHTML = '';
             const publicRooms = Object.entries(rooms).filter(([id, room]) => room.isPublic && room.status === 'open');
             if (publicRooms.length === 0) {
@@ -449,7 +391,9 @@ document.addEventListener('DOMContentLoaded', (event) => {
                 roomDiv.querySelector('.join-btn').addEventListener('click', () => {
                     if (room.password) {
                         const password = prompt('請輸入房間密碼:');
-                        if (password === null) return;
+                        if (password === null) {
+                            return; 
+                        }
                         tryJoinRoom(id, password);
                     } else {
                         tryJoinRoom(id, null);
@@ -457,15 +401,12 @@ document.addEventListener('DOMContentLoaded', (event) => {
                 });
 
                 if (isAdmin) {
-                    const adminBtn = roomDiv.querySelector('.admin-close-btn');
-                    if(adminBtn) {
-                        adminBtn.addEventListener('click', (e) => {
-                            e.stopPropagation();
-                            if (confirm(`確定要強制關閉房間 "${room.name}" 嗎？`)) {
-                                socket.emit('adminCloseRoom', { roomId: id });
-                            }
-                        });
-                    }
+                    roomDiv.querySelector('.admin-close-btn').addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        if (confirm(`確定要強制關閉房間 "${room.name}" 嗎？`)) {
+                            socket.emit('adminCloseRoom', { roomId: id });
+                        }
+                    });
                 }
                 roomListDiv.appendChild(roomDiv);
             });
