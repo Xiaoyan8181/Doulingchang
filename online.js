@@ -1,4 +1,4 @@
-// --- 線上鬥靈功能 (V3.1 - 整合合成遊戲) ---
+// --- 線上鬥靈功能 (V3.2 - 修正錯誤處理) ---
 
 // Socket.IO 連線
 // 初始連線時 auth 為空
@@ -28,7 +28,9 @@ document.addEventListener('DOMContentLoaded', (event) => {
         alert('與伺服器斷線，正在嘗試重新連接...');
     });
     
+    // --- 修正：更完整的錯誤處理 ---
     socket.on('connect_error', (err) => {
+        // 如果是驗證錯誤，表示 token 過期或無效
         if (err.message === "Authentication error") {
             console.error('驗證錯誤，請重新登入');
             currentUser = null;
@@ -36,7 +38,11 @@ document.addEventListener('DOMContentLoaded', (event) => {
             alert('您的登入已過期，請重新登入。');
             window.location.reload();
         } else {
+            // 對於其他所有連線錯誤 (例如伺服器未啟動)
             console.error('連線錯誤:', err.message);
+            // 隱藏載入畫面，並顯示錯誤提示，避免卡住
+            loadingPopup.style.display = 'none'; 
+            alert(`無法連接到伺服器，請確認伺服器狀態或稍後再試。\n錯誤訊息: ${err.message}`);
         }
     });
 
@@ -44,7 +50,7 @@ document.addEventListener('DOMContentLoaded', (event) => {
         alert(message);
         isSocketConnected = false;
         currentUser = null;
-        socket.auth = {};
+        socket.auth = {}; // 清除 token
         socket.disconnect();
         window.location.reload();
     });
@@ -83,7 +89,6 @@ document.addEventListener('DOMContentLoaded', (event) => {
     socket.on('roomClosed', (closedRoomId) => {
         if (currentRoomId === closedRoomId) {
             alert('房間已關閉');
-            // 新增：如果遊戲正在進行，也要切換回大廳
             document.getElementById('game-page').style.display = 'none';
             document.getElementById('room-page').style.display = 'none';
             document.getElementById('lobby-page').style.display = 'block';
@@ -107,10 +112,8 @@ document.addEventListener('DOMContentLoaded', (event) => {
         loadRoomList();
     });
 
-    // --- 新增：監聽來自伺服器的 gameStarted 事件 ---
     socket.on('gameStarted', (gameData) => {
         console.log("伺服器發送了遊戲開始信號！", gameData);
-        // 呼叫 merge-game.js 中的 Game.init() 來啟動遊戲
         if (typeof Game !== 'undefined' && typeof Game.init === 'function') {
             Game.init();
         } else {
@@ -241,7 +244,7 @@ document.addEventListener('DOMContentLoaded', (event) => {
             }
         }
         socket.emit('leaveRoom', { roomId: currentRoomId });
-        document.getElementById('game-page').style.display = 'none'; // 如果在遊戲中，也要隱藏
+        document.getElementById('game-page').style.display = 'none';
         document.getElementById('room-page').style.display = 'none';
         document.getElementById('lobby-page').style.display = 'block';
         currentRoomId = null;
@@ -249,15 +252,11 @@ document.addEventListener('DOMContentLoaded', (event) => {
         loadRoomList();
     });
     
-    // --- 修改：開始遊戲按鈕的點擊事件 ---
     document.getElementById('start-game').addEventListener('click', () => {
-        // 檢查房內玩家列表的子元素數量
         const playerList = document.getElementById('in-room-players-list').children;
         if (playerList.length >= 2) {
-            // 人數足夠，向伺服器發送開始遊戲的請求
             socket.emit('startGame', currentRoomId);
         } else {
-            // 人數不足，提示用戶
             alert("房間人數需要兩人(含)以上才能開始遊戲！");
         }
     });
@@ -328,7 +327,6 @@ document.addEventListener('DOMContentLoaded', (event) => {
         listDiv.innerHTML = '';
         const isCurrentUserOwner = currentUser === currentRoomOwner;
         
-        // 修改：讓房主也能看到開始按鈕的狀態變化
         if (isCurrentUserOwner) {
             const startGameBtn = document.getElementById('start-game');
             if (playerList.length >= 2) {
