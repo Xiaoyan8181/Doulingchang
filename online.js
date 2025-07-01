@@ -1,4 +1,4 @@
-// --- 線上鬥靈功能 (V3.4 - 修正頁面管理 Bug) ---
+// --- 線上鬥靈功能 (V3.5 - 最終修正頁面管理) ---
 
 // Socket.IO 連線
 const socket = io('https://fog-erratic-paw.glitch.me', { auth: {} }); 
@@ -9,15 +9,14 @@ let currentRoomId = null;
 let currentRoomOwner = null; 
 
 // 將所有需要被統一管理的頁面容器的ID存成陣列
-// --- 修正：將 loading-popup 加入到管理列表！ ---
 const pageIds = ['loading-popup', 'login-page', 'register-page', 'lobby-page', 'create-room-page', 'room-page', 'game-page'];
 
 /**
- * 新增：一個專門用來切換頁面的函式
+ * 修正：一個極簡且穩固的頁面切換函式
  * @param {string} pageIdToShow 要顯示的頁面的ID
  */
 function showPage(pageIdToShow) {
-    // 先隱藏所有頁面
+    // 1. 先隱藏所有頁面
     pageIds.forEach(id => {
         const page = document.getElementById(id);
         if (page) {
@@ -25,15 +24,11 @@ function showPage(pageIdToShow) {
         }
     });
 
-    // 然後只顯示指定的頁面
+    // 2. 然後只顯示指定的頁面
     const targetPage = document.getElementById(pageIdToShow);
     if (targetPage) {
-        // 根據頁面的佈局需求，使用 block 或 flex
-        if (targetPage.classList.contains('page-layout') || targetPage.classList.contains('loading-container') || id === 'login-page' || id === 'register-page') {
-             targetPage.style.display = 'flex';
-        } else {
-             targetPage.style.display = 'block';
-        }
+        // 經檢查，所有主要頁面容器都使用 flex 進行佈局
+        targetPage.style.display = 'flex';
     }
 }
 
@@ -199,6 +194,19 @@ document.addEventListener('DOMContentLoaded', (event) => {
     document.getElementById('create-room').addEventListener('click', () => {
         showPage('create-room-page');
     });
+    
+    //修正：create-room-page 的顯示也應由 showPage 控制，而不是 flex
+    document.getElementById('create-room').addEventListener('click', () => {
+        showPage('create-room-page');
+        // 初始化密碼框的可見性
+        document.getElementById('room-password').style.display = document.getElementById('room-public').value === 'true' ? 'block' : 'none';
+    });
+
+
+    document.getElementById('room-public').addEventListener('change', (e) => {
+        document.getElementById('room-password').style.display = e.target.value === 'true' ? 'block' : 'none';
+    });
+    
 
     document.getElementById('cancel-create').addEventListener('click', () => {
         showPage('lobby-page');
