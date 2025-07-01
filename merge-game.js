@@ -8,10 +8,11 @@ const Game = {
         currentXP: 0,
         xpToNextLevel: 10,
         gridSize: 3,
-        grid: [], // 儲存格子的數據，例如 [{ level: 1, id: 'char-12345' }, null, ...]
+        grid: [], // 儲存格子的數據
         charactersOnBoard: 0,
         gameLoopInterval: null,
         uniqueIdCounter: 0,
+        isGameActive: false,
     },
 
     // DOM 元素快取
@@ -19,14 +20,13 @@ const Game = {
 
     // 初始化遊戲
     init() {
-        console.log("開始初始化合成遊戲...");
+        console.log("初始化合成遊戲核心...");
         this.cacheDOMElements();
         this.resetState();
         this.renderInitialUI();
         this.setupEventListeners();
         this.state.gameLoopInterval = setInterval(this.gameLoop.bind(this), 1000); // 每秒執行一次遊戲循環
-        document.getElementById('room-page').style.display = 'none';
-        this.elements.gamePage.style.display = 'block';
+        this.state.isGameActive = true;
     },
     
     // 初始化/重置遊戲狀態
@@ -39,20 +39,25 @@ const Game = {
         this.state.grid = Array(9).fill(null);
         this.state.charactersOnBoard = 0;
         this.state.uniqueIdCounter = 0;
+        this.state.isGameActive = false;
         if (this.state.gameLoopInterval) {
             clearInterval(this.state.gameLoopInterval);
+            this.state.gameLoopInterval = null;
         }
     },
 
     // 快取常用的 DOM 元素
     cacheDOMElements() {
-        this.elements.gamePage = document.getElementById('game-page');
         this.elements.goldDisplay = document.getElementById('gold-display');
         this.elements.gridLevelDisplay = document.getElementById('grid-level-display');
         this.elements.xpBar = document.getElementById('xp-bar-fill');
         this.elements.xpText = document.getElementById('xp-text');
         this.elements.gameGrid = document.getElementById('game-grid');
         this.elements.buyButton = document.getElementById('buy-character-btn');
+        this.elements.gameTimer = document.getElementById('game-timer');
+        this.elements.scoreboardList = document.getElementById('scoreboard-list');
+        this.elements.resultsPopup = document.getElementById('results-popup');
+        this.elements.finalRankings = document.getElementById('final-rankings');
     },
 
     // 渲染初始介面
@@ -94,13 +99,12 @@ const Game = {
     createCharacterElement(characterData) {
         const characterDiv = document.createElement('div');
         characterDiv.className = 'character';
-        characterDiv.draggable = true;
+        characterDiv.draggable = this.state.isGameActive; // 遊戲結束後不可拖動
         characterDiv.id = characterData.id;
         characterDiv.dataset.level = characterData.level;
         
         const img = document.createElement('img');
         img.src = this.getCharacterImage(characterData.level);
-        // 防止圖片本身被拖曳，我們只拖曳外層的 div
         img.ondragstart = (e) => e.preventDefault();
         
         characterDiv.appendChild(img);
@@ -110,49 +114,49 @@ const Game = {
     // 根據等級獲取圖片路徑
     getCharacterImage(level) {
         const imageNumber = 34 - level; // 等級1對應033.png, 等級33對應001.png
-        return `${String(imageNumber).padStart(3, '0')}.png`;
+        return `images/${String(imageNumber).padStart(3, '0')}.png`;
     },
 
     // 設定事件監聽器
     setupEventListeners() {
         this.elements.buyButton.addEventListener('click', this.handleBuy.bind(this));
 
-        // Drag and Drop 事件
         let dragSrcElement = null;
 
         this.elements.gameGrid.addEventListener('dragstart', (e) => {
-            if (e.target.classList.contains('character')) {
+            if (this.state.isGameActive && e.target.classList.contains('character')) {
                 dragSrcElement = e.target;
                 e.dataTransfer.effectAllowed = 'move';
                 e.dataTransfer.setData('text/html', e.target.innerHTML);
-                // 讓拖曳時的 ghost 圖片稍微透明
                 setTimeout(() => e.target.classList.add('dragging'), 0);
             }
         });
 
         this.elements.gameGrid.addEventListener('dragover', (e) => {
-            e.preventDefault();
+            if (this.state.isGameActive) e.preventDefault();
         });
 
         this.elements.gameGrid.addEventListener('dragenter', (e) => {
-            if(e.target.classList.contains('grid-cell')) {
-                e.target.classList.add('drag-over');
+            const targetCell = e.target.closest('.grid-cell');
+            if (this.state.isGameActive && targetCell) {
+                targetCell.classList.add('drag-over');
             }
         });
 
         this.elements.gameGrid.addEventListener('dragleave', (e) => {
-            if(e.target.classList.contains('grid-cell')) {
-                e.target.classList.remove('drag-over');
+            const targetCell = e.target.closest('.grid-cell');
+            if(targetCell) {
+                targetCell.classList.remove('drag-over');
             }
         });
 
         this.elements.gameGrid.addEventListener('drop', (e) => {
             e.preventDefault();
             e.stopPropagation();
-            if(e.target.classList.contains('grid-cell')) {
-                e.target.classList.remove('drag-over');
-            }
-            if (dragSrcElement) {
+            const targetCell = e.target.closest('.grid-cell');
+            if(targetCell) targetCell.classList.remove('drag-over');
+            
+            if (this.state.isGameActive && dragSrcElement) {
                 this.handleDrop(dragSrcElement, e.target);
             }
         });
@@ -167,6 +171,7 @@ const Game = {
 
     // 處理購買按鈕
     handleBuy() {
+        if (!this.state.isGameActive) return;
         const cost = 10;
         if (this.state.gold < cost) {
             alert("金幣不足！");
@@ -179,17 +184,13 @@ const Game = {
 
         this.state.gold -= cost;
         
-        // 找到一個空格子
         let emptyCells = [];
         this.state.grid.forEach((cell, index) => {
-            if (cell === null) {
-                emptyCells.push(index);
-            }
+            if (cell === null) emptyCells.push(index);
         });
         
         const randomIndex = emptyCells[Math.floor(Math.random() * emptyCells.length)];
         
-        // 隨機生成角色等級
         const characterLevel = Math.floor(Math.random() * this.state.gridLevel) + 1;
         
         const newCharacter = {
@@ -207,32 +208,21 @@ const Game = {
     // 處理拖放邏輯
     handleDrop(draggedElement, dropTarget) {
         const srcIndex = parseInt(draggedElement.parentElement.dataset.index, 10);
-        let destIndex;
-
-        // 判斷是放到格子還是角色上
-        if (dropTarget.classList.contains('grid-cell')) {
-            destIndex = parseInt(dropTarget.dataset.index, 10);
-        } else if (dropTarget.parentElement.classList.contains('character')) {
-            destIndex = parseInt(dropTarget.parentElement.parentElement.dataset.index, 10);
-        } else {
-            return; // 無效的放置目標
-        }
+        const destCell = dropTarget.closest('.grid-cell');
+        if (!destCell) return;
+        const destIndex = parseInt(destCell.dataset.index, 10);
         
         const srcChar = this.state.grid[srcIndex];
         const destChar = this.state.grid[destIndex];
 
-        if (srcIndex === destIndex) return; // 沒移動
+        if (srcIndex === destIndex) return;
 
-        // 情況一：合併 (等級相同且都不是最高級)
         if (destChar && srcChar.level === destChar.level && srcChar.level < 33) {
             const newLevel = srcChar.level + 1;
-            this.state.grid[destIndex].level = newLevel; // 目標格子升級
-            this.state.grid[srcIndex] = null; // 來源格子清空
+            this.state.grid[destIndex].level = newLevel;
+            this.state.grid[srcIndex] = null;
             this.state.charactersOnBoard--;
-
-            this.addXP(newLevel); // 增加經驗值
-
-        // 情況二：交換位置
+            this.addXP(newLevel);
         } else {
             [this.state.grid[srcIndex], this.state.grid[destIndex]] = 
             [this.state.grid[destIndex], this.state.grid[srcIndex]];
@@ -247,7 +237,6 @@ const Game = {
         while (this.state.currentXP >= this.state.xpToNextLevel) {
             this.state.currentXP -= this.state.xpToNextLevel;
             this.state.gridLevel++;
-            // 根據規則計算下一級所需經驗
             this.state.xpToNextLevel = 5 * (this.state.gridLevel + 1);
             this.checkGridExpansion();
         }
@@ -266,7 +255,6 @@ const Game = {
             const oldSize = this.state.gridSize;
             const newGrid = Array(newSize * newSize).fill(null);
             
-            // 將舊格子數據複製到新格子
             for (let r = 0; r < oldSize; r++) {
                 for (let c = 0; c < oldSize; c++) {
                     newGrid[r * newSize + c] = this.state.grid[r * oldSize + c];
@@ -280,10 +268,10 @@ const Game = {
 
     // 遊戲主循環（用於賺錢）
     gameLoop() {
+        if (!this.state.isGameActive) return;
         let income = 0;
         this.state.grid.forEach(char => {
             if (char) {
-                // 收入公式: 等級^2 - 1
                 income += Math.pow(char.level, 2) - 1;
             }
         });
@@ -292,5 +280,53 @@ const Game = {
             this.state.gold += income;
             this.updateStatsUI();
         }
+    },
+
+    // === 新增：由 online.js 呼叫的函式 ===
+    getScore() {
+        return this.state.gold;
+    },
+
+    updateTimer(timeLeft) {
+        const minutes = Math.floor(timeLeft / 60);
+        const seconds = timeLeft % 60;
+        this.elements.gameTimer.textContent = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+    },
+
+    updateScoreboard(scores = []) {
+        this.elements.scoreboardList.innerHTML = '';
+        scores.forEach((player, index) => {
+            const scoreItem = document.createElement('div');
+            scoreItem.className = 'score-item';
+            scoreItem.innerHTML = `
+                <span class="rank">${index + 1}.</span>
+                <span class="name">${player.username}</span>
+                <span class="score">${player.score}</span>
+            `;
+            this.elements.scoreboardList.appendChild(scoreItem);
+        });
+    },
+
+    endGame(finalScores) {
+        this.state.isGameActive = false;
+        clearInterval(this.state.gameLoopInterval);
+        this.state.gameLoopInterval = null;
+        this.elements.buyButton.disabled = true; // 禁用購買按鈕
+
+        // 渲染最終排名
+        this.elements.finalRankings.innerHTML = '';
+        finalScores.forEach((player, index) => {
+            const scoreItem = document.createElement('div');
+            scoreItem.className = 'score-item';
+            scoreItem.innerHTML = `
+                <span class="rank">${index + 1}.</span>
+                <span class="name">${player.username}</span>
+                <span class="score">${player.score}</span>
+            `;
+            this.elements.finalRankings.appendChild(scoreItem);
+        });
+        
+        // 顯示彈出視窗
+        this.elements.resultsPopup.style.display = 'flex';
     }
 };
