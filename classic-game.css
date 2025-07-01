@@ -1,0 +1,136 @@
+/* classic-game.css */
+
+#classic-game-page {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    max-width: 1400px;
+    margin: 0 auto;
+    gap: 15px;
+}
+
+#classic-timer-bar {
+    width: 100%;
+    text-align: center;
+    font-size: 1.5em;
+    font-weight: bold;
+    color: #ffc107;
+    background-color: #2c2c2c;
+    padding: 10px;
+    border-radius: 8px;
+}
+
+#classic-spirit-container {
+    display: flex;
+    justify-content: space-around;
+    gap: 15px;
+    width: 100%;
+}
+
+.classic-spirit-box {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background-color: #3a3a3a;
+    border-radius: 8px;
+    padding: 10px;
+    border: 2px solid #555;
+}
+
+.spirit-header {
+    display: flex;
+    align-items: center;
+    padding-bottom: 10px;
+    margin-bottom: 10px;
+    border-bottom: 2px solid;
+}
+.spirit-header.common { border-color: blue; }
+.spirit-header.rare { border-color: purple; }
+.spirit-header.epic { border-color: gold; }
+
+.spirit-avatar {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    margin-right: 10px;
+}
+
+.spirit-name {
+    font-size: 1.2em;
+    font-weight: bold;
+}
+
+.spirit-dice-bar {
+    display: flex;
+    justify-content: space-around;
+    margin-bottom: 10px;
+}
+
+.dice-point {
+    width: 30px;
+    height: 30px;
+    line-height: 30px;
+    text-align: center;
+    font-weight: bold;
+    border: 1px solid #777;
+    background-color: #eee;
+    color: #111;
+    border-radius: 4px;
+}
+
+.spirit-items-bar {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 5px;
+    margin-bottom: 15px;
+}
+
+.item-slot {
+    position: relative;
+}
+.item-slot img {
+    width: 100%;
+    border-radius: 5px;
+    border: 1px solid #666;
+}
+.item-count {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    background-color: #c00;
+    color: white;
+    font-size: 12px;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    line-height: 20px;
+    text-align: center;
+    font-weight: bold;
+}
+
+.spirit-bet-info {
+    margin-bottom: 10px;
+    background-color: #2c2c2c;
+    padding: 8px;
+    border-radius: 5px;
+    font-size: 0.9em;
+}
+.spirit-bet-info > div {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 5px;
+}
+.bet-odds {
+    color: #ffc107;
+    font-weight: bold;
+}
+
+.bet-button {
+    width: 100%;
+    padding: 10px;
+    font-size: 1em;
+}
+
+#classic-shop-container {
+    /* 商店的樣式 */
+}
