@@ -11,15 +11,12 @@
     <div id="login-page" class="container">
         <h1>登入</h1>
         <p style="color: red;">密碼請設置非常用密碼</p>
-        
         <div class="form-group">
             <input type="text" id="login-username" placeholder="帳號">
         </div>
-        
         <div class="form-group">
             <input type="password" id="login-password" placeholder="密碼">
         </div>
-
         <div class="button-group">
             <button id="login-submit">登入</button>
             <button id="show-register">註冊帳號</button>
@@ -29,7 +26,6 @@
 
     <div id="register-page" class="container" style="display: none;">
         <h1>註冊帳號</h1>
-        
         <div class="form-group">
             <input type="text" id="register-username" placeholder="帳號名（可中文）">
         </div>
@@ -39,7 +35,6 @@
         <div class="form-group">
             <input type="password" id="register-confirm-password" placeholder="確認密碼">
         </div>
-
         <div class="button-group register-buttons">
             <button id="back-to-login">返回</button>
             <button id="register-submit">確認註冊</button>
@@ -66,18 +61,14 @@
 
     <div id="create-room-page" class="container" style="display: none;">
         <h1>創建房間</h1>
-        
         <input type="text" id="room-name" placeholder="房間名稱">
-        
         <label>是否開放：
             <select id="room-public">
                 <option value="true">是</option>
                 <option value="false">否</option>
             </select>
         </label>
-        
         <input type="password" id="room-password" placeholder="房間密碼（可選）">
-        
         <label>人數限制：
             <select id="room-limit">
                 <option value="0">無限制</option>
@@ -87,7 +78,6 @@
                 <option value="5">5</option>
             </select>
         </label>
-        
         <label>投餵道具時間：
             <select id="feed-time">
                 <option value="10">10秒</option>
@@ -99,7 +89,6 @@
                 <option value="600">10分</option>
             </select>
         </label>
-        
         <label>下注時間：
             <select id="bet-time">
                 <option value="10">10秒</option>
@@ -111,7 +100,6 @@
                 <option value="600">10分</option>
             </select>
         </label>
-        
         <div>
             <button id="cancel-create">取消創建</button>
             <button id="confirm-create">確定創建</button>
@@ -125,7 +113,6 @@
         </div>
         <div class="main-content" style="position: relative;">
             <span id="room-id-display" style="position: absolute; top: 20px; left: 0; font-size: 14px; color: #aaa;"></span>
-            
             <h1 id="room-title"></h1>
             <div id="spirit-boxes" style="display: flex; justify-content: center; gap: 20px;"></div>
             <div id="game-phase"></div>
@@ -135,16 +122,7 @@
         </div>
     </div>
 
-    <div id="loading-popup" class="loading-container">
-        <div class="loading-box">
-            <p id="loading-text">正在連接伺服器...</p>
-        </div>
-    </div>
-
-    <script src="https://cdn.socket.io/4.5.0/socket.io.min.js"></script>
-    <script src="online.js"></script>
-
-<div id="game-page" class="container" style="display: none;">
+    <div id="game-page" class="container" style="display: none;">
         <div class="game-stats-bar">
             <span>金幣: <span id="gold-display">500</span></span>
             <span>格子等級: <span id="grid-level-display">1</span></span>
@@ -154,14 +132,12 @@
             </div>
         </div>
         <div id="game-container">
-            <div id="game-grid">
-                </div>
+            <div id="game-grid"></div>
             <div class="game-controls">
                 <button id="buy-character-btn">購買 (10)</button>
             </div>
         </div>
     </div>
-
 
     <div id="loading-popup" class="loading-container">
         <div class="loading-box">
@@ -172,8 +148,5 @@
     <script src="https://cdn.socket.io/4.5.0/socket.io.min.js"></script>
     <script src="online.js"></script>
     <script src="merge-game.js"></script> 
-</body>
-</html>
-
 </body>
 </html>
