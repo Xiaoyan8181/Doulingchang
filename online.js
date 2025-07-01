@@ -1,13 +1,14 @@
-// --- 線上鬥靈功能 ---
+// --- 線上鬥靈功能 (V3.0 - JWT 安全認證版) ---
 
 // Socket.IO 連線
-const socket = io('https://fog-erratic-paw.glitch.me'); 
+// 初始連線時 auth 為空
+const socket = io('https://fog-erratic-paw.glitch.me', { auth: {} }); 
 let isSocketConnected = false; 
 let currentUser = null;
 let isAdmin = false; 
 let currentRoomId = null;
+let currentRoomOwner = null; 
 
-// DOMContentLoaded確保在操作DOM前，頁面已載入
 document.addEventListener('DOMContentLoaded', (event) => {
     const loadingPopup = document.getElementById('loading-popup');
     
@@ -15,28 +16,41 @@ document.addEventListener('DOMContentLoaded', (event) => {
     socket.on('connect', () => {
         console.log('成功連接到伺服器！ID:', socket.id);
         isSocketConnected = true;
-        
-        // 隱藏載入畫面，顯示登入頁面
-        loadingPopup.style.display = 'none'; 
-        document.getElementById('login-page').style.display = 'block';
+        // 只有在還沒有 currentUser (即未登入) 時才顯示登入畫面
+        // 這可以處理斷線重連後不用再登入一次的情況
+        if (!currentUser) {
+            loadingPopup.style.display = 'none'; 
+            document.getElementById('login-page').style.display = 'block';
+        }
     });
 
     socket.on('disconnect', () => {
         console.log('與伺服器斷線');
         isSocketConnected = false;
-        alert('與伺服器斷線，請重新整理頁面！');
+        // 不再自動重載，讓 socket.io 自動重連
+        alert('與伺服器斷線，正在嘗試重新連接...');
     });
-
+    
+    // 新增：處理驗證錯誤
     socket.on('connect_error', (err) => {
-        console.error('連線錯誤:', err.message);
-        loadingPopup.style.display = 'none';
-        alert('無法連接到伺服器，請稍後再試。');
+        // 如果是驗證錯誤，表示 token 過期或無效
+        if (err.message === "Authentication error") {
+            console.error('驗證錯誤，請重新登入');
+            // 清除本地用戶數據並強制重載到登入頁面
+            currentUser = null;
+            socket.auth = {};
+            alert('您的登入已過期，請重新登入。');
+            window.location.reload();
+        } else {
+            console.error('連線錯誤:', err.message);
+        }
     });
 
-    // --- V2 新增監聽器 ---
     socket.on('forceDisconnect', (message) => {
         alert(message);
         isSocketConnected = false;
+        currentUser = null;
+        socket.auth = {}; // 清除 token
         socket.disconnect();
         window.location.reload();
     });
@@ -44,42 +58,57 @@ document.addEventListener('DOMContentLoaded', (event) => {
     socket.on('updateOnlineUsers', (userList) => {
         const listDiv = document.getElementById('online-players-list');
         if (!listDiv) return;
+        userList.sort((a, b) => {
+            if (a === currentUser) return -1;
+            if (b === currentUser) return 1;
+            if (a === '黑鷺鷺') return -1;
+            if (b === '黑鷺鷺') return 1;
+            return a.localeCompare(b);
+        });
         listDiv.innerHTML = '';
         userList.forEach(username => {
             const playerDiv = document.createElement('div');
             playerDiv.className = 'player-list-item';
-            playerDiv.textContent = username;
-            if (username === '黑鷺鷺') playerDiv.textContent += ' (管理員)';
+            if (username === currentUser) {
+                playerDiv.textContent = `${username} (您)`;
+                playerDiv.classList.add('player-self');
+            } else if (username === '黑鷺鷺') {
+                playerDiv.textContent = `${username} (管理員)`;
+                playerDiv.classList.add('player-admin');
+            } else {
+                playerDiv.textContent = username;
+            }
             listDiv.appendChild(playerDiv);
         });
     });
 
     socket.on('playerListUpdate', (playerList) => {
-        const listDiv = document.getElementById('in-room-players-list');
-        if (!listDiv) return;
-        listDiv.innerHTML = '';
-        playerList.forEach(username => {
-            const playerDiv = document.createElement('div');
-            playerDiv.className = 'player-list-item';
-            playerDiv.textContent = username;
-            listDiv.appendChild(playerDiv);
-        });
+        updateInRoomPlayerList(playerList);
     });
 
     socket.on('roomClosed', (closedRoomId) => {
         if (currentRoomId === closedRoomId) {
-            alert('您所在的房間已被房主或管理員關閉。');
+            alert('房間已關閉');
             document.getElementById('room-page').style.display = 'none';
             document.getElementById('lobby-page').style.display = 'block';
             currentRoomId = null;
+            currentRoomOwner = null;
             loadRoomList();
         } else {
-            // 如果不在該房間，只需從列表中移除
             const roomElement = document.getElementById(`room-${closedRoomId}`);
             if (roomElement) {
                 roomElement.remove();
             }
         }
+    });
+    
+    socket.on('kicked', () => {
+        alert('你已被房主踢掉');
+        document.getElementById('room-page').style.display = 'none';
+        document.getElementById('lobby-page').style.display = 'block';
+        currentRoomId = null;
+        currentRoomOwner = null;
+        loadRoomList();
     });
     // ----------------------
 
@@ -91,6 +120,14 @@ document.addEventListener('DOMContentLoaded', (event) => {
             if (response.success) {
                 currentUser = username;
                 isAdmin = response.isAdmin;
+                
+                // 修正：儲存 token 以供後續連線使用
+                socket.auth = { token: response.token };
+                
+                // 連線並傳送驗證資料
+                socket.disconnect(); // 先斷開
+                socket.connect();   // 再重連，這次會帶上 token
+                
                 document.getElementById('login-page').style.display = 'none';
                 document.getElementById('lobby-page').style.display = 'block';
                 loadRoomList();
@@ -128,8 +165,10 @@ document.addEventListener('DOMContentLoaded', (event) => {
     });
 
     document.getElementById('back-to-menu-from-lobby').addEventListener('click', () => {
-        socket.emit('logout', { username: currentUser });
-        // 直接導航回主頁面
+        // 登出時也應該清理 token
+        currentUser = null;
+        socket.auth = {};
+        socket.disconnect();
         window.location.href = 'index.html';
     });
 
@@ -139,26 +178,32 @@ document.addEventListener('DOMContentLoaded', (event) => {
     });
 
     document.getElementById('room-public').addEventListener('change', (e) => {
-        document.getElementById('room-password').style.display = e.target.value === 'false' ? 'block' : 'none';
+        document.getElementById('room-password').style.display = e.target.value === 'true' ? 'block' : 'none';
     });
+    document.getElementById('room-password').style.display = document.getElementById('room-public').value === 'true' ? 'block' : 'none';
 
     document.getElementById('cancel-create').addEventListener('click', () => {
         document.getElementById('create-room-page').style.display = 'none';
         document.getElementById('lobby-page').style.display = 'block';
     });
 
+    // 修正：創建房間時不再需要傳遞 owner 和 players
     document.getElementById('confirm-create').addEventListener('click', () => {
+        const roomNameInput = document.getElementById('room-name');
+        const roomIsPublic = document.getElementById('room-public').value === 'true';
+        const roomPasswordInput = document.getElementById('room-password');
+
         const room = {
-            name: document.getElementById('room-name').value || `玩家 ${currentUser} 的房間`,
-            isPublic: document.getElementById('room-public').value === 'true',
-            password: document.getElementById('room-password').value,
+            name: roomNameInput.value || `玩家 ${currentUser} 的房間`,
+            isPublic: roomIsPublic,
+            password: (roomIsPublic && roomPasswordInput.value) ? roomPasswordInput.value : null,
             limit: parseInt(document.getElementById('room-limit').value),
             feedTime: parseInt(document.getElementById('feed-time').value),
             betTime: parseInt(document.getElementById('bet-time').value),
-            owner: currentUser,
-            players: [currentUser],
             status: 'open'
+            // owner 和 players 會由伺服器根據 token 自動設定
         };
+
         socket.emit('createRoom', room, (response) => {
             if (response.success) {
                 currentRoomId = response.roomId;
@@ -177,11 +222,16 @@ document.addEventListener('DOMContentLoaded', (event) => {
             if (!room) {
                 return alert('房間不存在');
             }
-            if (room.password) {
+            if (room.isPublic && room.password) {
                 const joinPassword = prompt('請輸入房間密碼:');
                 if (joinPassword === null) return;
                 tryJoinRoom(roomId, joinPassword);
-            } else {
+            } else if (!room.isPublic){
+                const joinPassword = prompt('此為私人房間，請輸入房間密碼:');
+                if (joinPassword === null) return;
+                tryJoinRoom(roomId, joinPassword);
+            }
+             else {
                 tryJoinRoom(roomId, null);
             }
         });
@@ -190,10 +240,18 @@ document.addEventListener('DOMContentLoaded', (event) => {
     document.getElementById('refresh-rooms').addEventListener('click', loadRoomList);
 
     document.getElementById('back-to-lobby').addEventListener('click', () => {
-        socket.emit('leaveRoom', { roomId: currentRoomId, username: currentUser });
+        if (currentUser === currentRoomOwner) {
+            if (!confirm('您是房主，離開將會關閉房間，確定嗎？')) {
+                return;
+            }
+        }
+        // 修正：不再需要傳遞 username，伺服器會從 token 讀取
+        socket.emit('leaveRoom', { roomId: currentRoomId });
+        
         document.getElementById('room-page').style.display = 'none';
         document.getElementById('lobby-page').style.display = 'block';
         currentRoomId = null;
+        currentRoomOwner = null;
         loadRoomList();
     });
     
@@ -203,8 +261,9 @@ document.addEventListener('DOMContentLoaded', (event) => {
 
     // ================== 功能函式 ==================
 
+    // 修正：加入房間時不再需要傳遞 username
     function tryJoinRoom(roomId, password) {
-        socket.emit('joinRoom', { roomId, username: currentUser, password }, (response) => {
+        socket.emit('joinRoom', { roomId, password }, (response) => {
             if (response.success) {
                 currentRoomId = roomId;
                 enterRoom(roomId);
@@ -215,24 +274,21 @@ document.addEventListener('DOMContentLoaded', (event) => {
     }
 
     function loadRoomList() {
+        // ... 此部分邏輯不變 ...
         socket.emit('getRooms', (rooms) => {
             const roomListDiv = document.getElementById('public-room-list');
             roomListDiv.innerHTML = '';
             const publicRooms = Object.entries(rooms).filter(([id, room]) => room.isPublic && room.status === 'open');
-
             if (publicRooms.length === 0) {
                 roomListDiv.innerHTML = '<p style="text-align: center; width: 100%;">目前沒有公開房間。</p>';
                 return;
             }
-            
             publicRooms.forEach(([id, room]) => {
                 const roomDiv = document.createElement('div');
                 roomDiv.className = 'room-item';
                 roomDiv.id = `room-${id}`;
-                
-                let headerHTML = room.password ? '<span>🔑 </span>' : '';
+                let headerHTML = (room.isPublic && room.password) ? '<span>🔑 </span>' : '';
                 headerHTML += room.name;
-
                 roomDiv.innerHTML = `
                     <div class="room-item-header">${headerHTML}</div>
                     <div class="room-item-players">房主: ${room.owner} | 人數: ${room.players.length}/${room.limit || '∞'}</div>
@@ -241,9 +297,8 @@ document.addEventListener('DOMContentLoaded', (event) => {
                         ${isAdmin ? `<button class="admin-close-btn">關閉</button>` : ''}
                     </div>
                 `;
-
                 roomDiv.querySelector('.join-btn').addEventListener('click', () => {
-                    if (room.password) {
+                    if (room.isPublic && room.password) {
                         const joinPassword = prompt('請輸入房間密碼:');
                         if (joinPassword === null) return;
                         tryJoinRoom(id, joinPassword);
@@ -251,20 +306,47 @@ document.addEventListener('DOMContentLoaded', (event) => {
                         tryJoinRoom(id, null);
                     }
                 });
-
                 if (isAdmin) {
                     roomDiv.querySelector('.admin-close-btn').addEventListener('click', (e) => {
                         e.stopPropagation(); 
                         if (confirm(`確定要強制關閉房間 "${room.name}" 嗎？`)) {
-                            socket.emit('adminCloseRoom', { roomId: id, username: currentUser }, (res) => {
+                            socket.emit('adminCloseRoom', { roomId: id }, (res) => { // 不再需要傳 username
                                 if (!res.success) alert(res.message);
                             });
                         }
                     });
                 }
-                
                 roomListDiv.appendChild(roomDiv);
             });
+        });
+    }
+
+    function updateInRoomPlayerList(playerList) {
+        const listDiv = document.getElementById('in-room-players-list');
+        if (!listDiv) return;
+        listDiv.innerHTML = '';
+        const isCurrentUserOwner = currentUser === currentRoomOwner;
+        playerList.forEach(username => {
+            const playerDiv = document.createElement('div');
+            playerDiv.className = 'player-list-item';
+            let playerText = username;
+            if (username === currentRoomOwner) playerText += ' (房主)';
+            if (isCurrentUserOwner && username !== currentUser && username !== '黑鷺鷺') {
+                playerDiv.innerHTML = `
+                    <span>${playerText}</span>
+                    <button class="kick-btn" data-username="${username}">X</button>
+                `;
+                playerDiv.querySelector('.kick-btn').addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const userToKick = e.target.getAttribute('data-username');
+                    if (confirm(`確定要踢掉玩家 "${userToKick}" 嗎？`)) {
+                        socket.emit('kickPlayer', { roomId: currentRoomId, userToKick: userToKick });
+                    }
+                });
+            } else {
+                playerDiv.textContent = playerText;
+            }
+            listDiv.appendChild(playerDiv);
         });
     }
 
@@ -272,27 +354,20 @@ document.addEventListener('DOMContentLoaded', (event) => {
         document.getElementById('create-room-page').style.display = 'none';
         document.getElementById('lobby-page').style.display = 'none';
         document.getElementById('room-page').style.display = 'block';
-        
         socket.emit('getRoomInfo', roomId, (room) => {
             if(room) {
+                currentRoomOwner = room.owner;
                 document.getElementById('room-title').textContent = room.name;
+                document.getElementById('room-id-display').textContent = `房號: ${roomId}`;
                 document.getElementById('start-game').style.display = room.owner === currentUser ? 'block' : 'none';
-                
-                const listDiv = document.getElementById('in-room-players-list');
-                listDiv.innerHTML = '';
-                room.players.forEach(username => {
-                    const playerDiv = document.createElement('div');
-                    playerDiv.className = 'player-list-item';
-                    playerDiv.textContent = username;
-                    listDiv.appendChild(playerDiv);
-                });
+                updateInRoomPlayerList(room.players);
             } else {
                 alert('無法獲取房間資訊，可能已被關閉。');
                 document.getElementById('room-page').style.display = 'none';
                 document.getElementById('lobby-page').style.display = 'block';
+                currentRoomId = null;
+                currentRoomOwner = null;
             }
         });
     }
-    
-    // ... 此處應包含您原有的其他遊戲邏輯，例如 'gameStarted', displaySpirits(), startFeedPhase() 等等 ...
 });

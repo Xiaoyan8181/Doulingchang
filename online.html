@@ -66,14 +66,18 @@
 
     <div id="create-room-page" class="container" style="display: none;">
         <h1>創建房間</h1>
+        
         <input type="text" id="room-name" placeholder="房間名稱">
+        
         <label>是否開放：
             <select id="room-public">
                 <option value="true">是</option>
                 <option value="false">否</option>
             </select>
         </label>
-        <input type="password" id="room-password" placeholder="房間密碼（可選）" style="display: none;">
+        
+        <input type="password" id="room-password" placeholder="房間密碼（可選）">
+        
         <label>人數限制：
             <select id="room-limit">
                 <option value="0">無限制</option>
@@ -83,6 +87,7 @@
                 <option value="5">5</option>
             </select>
         </label>
+        
         <label>投餵道具時間：
             <select id="feed-time">
                 <option value="10">10秒</option>
@@ -94,6 +99,7 @@
                 <option value="600">10分</option>
             </select>
         </label>
+        
         <label>下注時間：
             <select id="bet-time">
                 <option value="10">10秒</option>
@@ -105,6 +111,7 @@
                 <option value="600">10分</option>
             </select>
         </label>
+        
         <div>
             <button id="cancel-create">取消創建</button>
             <button id="confirm-create">確定創建</button>
@@ -113,10 +120,12 @@
 
     <div id="room-page" class="container page-layout" style="display: none;">
         <div class="sidebar" id="in-room-players-sidebar">
-            <h2>房內玩家</h2>
+            <h2>房内玩家</h2>
             <div id="in-room-players-list"></div>
         </div>
-        <div class="main-content">
+        <div class="main-content" style="position: relative;">
+            <span id="room-id-display" style="position: absolute; top: 20px; left: 0; font-size: 14px; color: #aaa;"></span>
+            
             <h1 id="room-title"></h1>
             <div id="spirit-boxes" style="display: flex; justify-content: center; gap: 20px;"></div>
             <div id="game-phase"></div>

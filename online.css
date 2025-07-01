@@ -48,6 +48,27 @@
     width: 115px; /* 調整寬度以並排 */
 }
 
+/* --- 新增：創建房間頁面樣式 --- */
+#create-room-page {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px; /* 項目之間的間距 */
+}
+
+#create-room-page > input, #create-room-page > label, #create-room-page > div {
+    width: 300px; /* 統一寬度 */
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+#create-room-page > div {
+    justify-content: center; /* 按鈕居中 */
+    gap: 20px;
+}
+/* --- 結束新增 --- */
+
 
 /* 佈局 */
 .page-layout {
@@ -80,11 +101,33 @@
     gap: 8px;
 }
 
+/* 修正：調整玩家列表項樣式以容納踢人按鈕 */
 .player-list-item {
     background-color: #3a3a3a;
     padding: 8px;
     border-radius: 4px;
     color: #ddd;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+/* 新增：踢人按鈕樣式 */
+.kick-btn {
+    background-color: #c00;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    line-height: 20px;
+    text-align: center;
+    cursor: pointer;
+    font-weight: bold;
+    flex-shrink: 0;
+}
+.kick-btn:hover {
+    background-color: #f00;
 }
 
 .main-content {
@@ -188,4 +231,15 @@
 #loading-text {
     font-size: 18px;
     margin: 0;
+}
+
+/* --- 玩家列表顏色標記 --- */
+.player-self {
+    color: #4CAF50; /* 綠色 */
+    font-weight: bold;
+}
+
+.player-admin {
+    color: #F44336; /* 紅色 */
+    font-weight: bold;
 }
