@@ -134,7 +134,24 @@
             <button id="back-to-lobby" style="margin-top: 20px;">返回大廳</button>
         </div>
     </div>
-
+    
+    <div id="game-page" class="container" style="display: none;">
+        <h1>合成遊戲</h1>
+        <div id="game-stats">
+            <div>金幣: <span id="gold-display">500</span></div>
+            <div>等級: <span id="grid-level-display">1</span></div>
+            <div id="xp-bar-container">
+                <div id="xp-bar-fill"></div>
+                <span id="xp-text">0 / 10</span>
+            </div>
+        </div>
+        <div id="game-grid">
+            </div>
+        <div id="game-controls">
+            <button id="buy-character-btn">購買角色 (10 金幣)</button>
+            <button id="leave-game-btn">結束遊戲返回大廳</button>
+        </div>
+    </div>
     <div id="loading-popup" class="loading-container">
         <div class="loading-box">
             <p id="loading-text">正在連接伺服器...</p>
