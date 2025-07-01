@@ -143,5 +143,37 @@
 
     <script src="https://cdn.socket.io/4.5.0/socket.io.min.js"></script>
     <script src="online.js"></script>
+
+<div id="game-page" class="container" style="display: none;">
+        <div class="game-stats-bar">
+            <span>金幣: <span id="gold-display">500</span></span>
+            <span>格子等級: <span id="grid-level-display">1</span></span>
+            <div class="xp-bar-container">
+                <div id="xp-bar-fill"></div>
+                <span id="xp-text">0 / 10</span>
+            </div>
+        </div>
+        <div id="game-container">
+            <div id="game-grid">
+                </div>
+            <div class="game-controls">
+                <button id="buy-character-btn">購買 (10)</button>
+            </div>
+        </div>
+    </div>
+
+
+    <div id="loading-popup" class="loading-container">
+        <div class="loading-box">
+            <p id="loading-text">正在連接伺服器...</p>
+        </div>
+    </div>
+
+    <script src="https://cdn.socket.io/4.5.0/socket.io.min.js"></script>
+    <script src="online.js"></script>
+    <script src="merge-game.js"></script> 
+</body>
+</html>
+
 </body>
 </html>
