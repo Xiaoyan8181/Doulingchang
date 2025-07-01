@@ -88,8 +88,10 @@ document.addEventListener('DOMContentLoaded', (event) => {
     document.getElementById('back-to-room-btn').addEventListener('click', returnToRoomFromGame);
     
     document.getElementById('room-public').addEventListener('change', (e) => {
+        // 當設定為公開(true)時，密碼欄位可見，否則隱藏
         document.getElementById('room-password').style.display = e.target.value === 'true' ? 'block' : 'none';
     });
+    // 初始隱藏密碼欄位
     document.getElementById('room-password').style.display = 'none';
 
     // ================== 功能函式 ==================
@@ -143,15 +145,26 @@ document.addEventListener('DOMContentLoaded', (event) => {
     }
     
     function createRoom() {
+        const isPublic = document.getElementById('room-public').value === 'true';
         const room = {
             name: document.getElementById('room-name').value || `玩家 ${currentUser} 的房間`,
-            isPublic: document.getElementById('room-public').value === 'true',
-            password: document.getElementById('room-public').value === 'true' ? document.getElementById('room-password').value : null,
+            isPublic: isPublic,
+            // 如果是公開房，才讀取密碼欄位，私人房則必為 null
+            password: isPublic ? (document.getElementById('room-password').value || null) : null,
             limit: parseInt(document.getElementById('room-limit').value),
             feedTime: parseInt(document.getElementById('feed-time').value),
             betTime: parseInt(document.getElementById('bet-time').value),
             status: 'open'
         };
+        // 私人房必須設定密碼
+        if (!isPublic && !room.password) {
+            room.password = prompt("您正在創建私人房間，請為您的房間設定一個密碼：");
+            if (!room.password) {
+                alert("私人房間必須設定密碼！");
+                return;
+            }
+        }
+
         socket.emit('createRoom', room, (response) => {
             if (response.success) {
                 enterRoom(response.roomId);
@@ -161,24 +174,39 @@ document.addEventListener('DOMContentLoaded', (event) => {
         });
     }
     
+    //【已更新】處理「以房間號進入」的邏輯
     function joinRoomById() {
         const roomId = document.getElementById('join-room-id').value;
         if (!roomId) return alert('請輸入房間號');
+
         socket.emit('getRoomInfo', roomId, (room) => {
             if (!room) return alert('房間不存在');
-            let password = null;
-            if (room.isPublic && room.password) password = prompt('請輸入房間密碼:');
-            else if (!room.isPublic) password = prompt('此為私人房間，請輸入房間密碼:');
-            tryJoinRoom(roomId, password);
+
+            // 判斷是否需要密碼（私人房 或 公開但設有密碼）
+            const needsPassword = !room.isPublic || (room.isPublic && room.password);
+
+            if (needsPassword) {
+                const promptMessage = !room.isPublic ? '此為私人房間，請輸入房間密碼:' : '請輸入房間密碼:';
+                const password = prompt(promptMessage);
+                // 如果使用者按了取消，就中止
+                if (password === null) {
+                    return;
+                }
+                tryJoinRoom(roomId, password);
+            } else {
+                // 不需要密碼，直接加入
+                tryJoinRoom(roomId, null);
+            }
         });
     }
 
+    //【已更新】簡化 tryJoinRoom 函式，只負責發送事件
     function tryJoinRoom(roomId, password) {
-        if (password === null) return;
         socket.emit('joinRoom', { roomId, password }, (response) => {
             if (response.success) {
                 enterRoom(response.roomId);
             } else {
+                // 如果加入失敗，明確地彈出伺服器回傳的錯誤訊息
                 alert(response.message);
             }
         });
@@ -202,6 +230,7 @@ document.addEventListener('DOMContentLoaded', (event) => {
     }
 
     function leaveRoom() {
+        if (!currentRoomId) return;
         if (currentUser === currentRoomOwner) {
             if (!confirm('您是房主，離開將會關閉房間，確定嗎？')) return;
         }
@@ -216,18 +245,6 @@ document.addEventListener('DOMContentLoaded', (event) => {
         loadRoomList();
     }
     
-    function updateUserList(userList) {
-        // ... (此函式邏輯不變)
-    }
-
-    function updateInRoomPlayerList(playerList) {
-        // ... (此函式邏輯不變)
-    }
-
-    function loadRoomList() {
-        // ... (此函式邏輯不變)
-    }
-    
     // 遊戲流程處理函式
     function handleGameStart() {
         console.log("處理遊戲開始...");
@@ -235,7 +252,9 @@ document.addEventListener('DOMContentLoaded', (event) => {
         Game.init();
         // 每秒向伺服器更新一次分數
         scoreUpdateInterval = setInterval(() => {
-            socket.emit('updateScore', { score: Game.getScore() });
+            if (isSocketConnected) {
+                socket.emit('updateScore', { score: Game.getScore() });
+            }
         }, 1000);
     }
 
@@ -251,10 +270,11 @@ document.addEventListener('DOMContentLoaded', (event) => {
         document.getElementById('buy-character-btn').disabled = false; // 重新啟用按鈕
         showPage('room-page');
         // 可選：回到房間後重新獲取房間資訊
-        enterRoom(currentRoomId);
+        if(currentRoomId) {
+            enterRoom(currentRoomId);
+        }
     }
 
-    // 將重複的函式邏輯提取出來
     function updateUserList(userList) {
         const listDiv = document.getElementById('online-players-list');
         if (!listDiv) return;
@@ -322,11 +342,24 @@ document.addEventListener('DOMContentLoaded', (event) => {
                 let headerHTML = (room.password) ? '<span>🔑 </span>' : '';
                 headerHTML += room.name;
                 roomDiv.innerHTML = `<div class="room-item-header">${headerHTML}</div><div class="room-item-players">房主: ${room.owner} | 人數: ${room.players.length}/${room.limit || '∞'}</div><div class="room-item-actions"><button class="join-btn">加入</button>${isAdmin ? `<button class="admin-close-btn">關閉</button>` : ''}</div>`;
+                
+                //【已更新】處理大廳列表中「加入」按鈕的邏輯
                 roomDiv.querySelector('.join-btn').addEventListener('click', () => {
-                    let password = null;
-                    if (room.password) password = prompt('請輸入房間密碼:');
-                    tryJoinRoom(id, password);
+                    // 判斷房間是否需要密碼
+                    if (room.password) {
+                        const password = prompt('請輸入房間密碼:');
+                        // 如果使用者在輸入框點了「取消」，password 會是 null，就直接 return
+                        if (password === null) {
+                            return; 
+                        }
+                        // 使用者輸入了密碼（即使是空字串），繼續執行
+                        tryJoinRoom(id, password);
+                    } else {
+                        // 房間不需要密碼，直接傳入 null
+                        tryJoinRoom(id, null);
+                    }
                 });
+
                 if (isAdmin) {
                     roomDiv.querySelector('.admin-close-btn').addEventListener('click', (e) => {
                         e.stopPropagation();
