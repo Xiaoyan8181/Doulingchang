@@ -54,7 +54,6 @@ document.addEventListener('DOMContentLoaded', (event) => {
     socket.on('roomClosed', (closedRoomId) => {
         if (currentRoomId === closedRoomId) {
             alert('房間已關閉');
-            // 如果遊戲結束彈窗是可見的，先隱藏它
             if (document.getElementById('results-popup').style.display === 'flex') {
                 document.getElementById('results-popup').style.display = 'none';
             }
@@ -82,7 +81,10 @@ document.addEventListener('DOMContentLoaded', (event) => {
     document.getElementById('back-to-login').addEventListener('click', () => showPage('login-page'));
     document.getElementById('register-submit').addEventListener('click', register);
     document.getElementById('back-to-menu-from-lobby').addEventListener('click', logout);
-    document.getElementById('create-room').addEventListener('click', () => showPage('create-room-page'));
+    document.getElementById('create-room').addEventListener('click', () => {
+        showPage('create-room-page');
+        toggleCreateRoomOptions(); // 【新增】顯示創建房間頁時，初始化選項
+    });
     document.getElementById('cancel-create').addEventListener('click', () => showPage('lobby-page'));
     document.getElementById('confirm-create').addEventListener('click', createRoom);
     document.getElementById('join-room').addEventListener('click', joinRoomById);
@@ -97,7 +99,28 @@ document.addEventListener('DOMContentLoaded', (event) => {
     });
     document.getElementById('room-password').style.display = 'none';
 
+    // 【新增】監聽遊戲模式下拉選單的變動
+    document.getElementById('room-game-mode').addEventListener('change', toggleCreateRoomOptions);
+
     // ================== 功能函式 ==================
+
+    // 【新增】根據選擇的遊戲模式，切換顯示對應的選項
+    function toggleCreateRoomOptions() {
+        const mode = document.getElementById('room-game-mode').value;
+        const classicFeedLabel = document.getElementById('game-time-classic-feed-label');
+        const classicBetLabel = document.getElementById('game-time-classic-bet-label');
+        const mergeLabel = document.getElementById('game-time-merge-label');
+
+        if (mode === 'classic') {
+            classicFeedLabel.style.display = 'flex';
+            classicBetLabel.style.display = 'flex';
+            mergeLabel.style.display = 'none';
+        } else { // 'merge'
+            classicFeedLabel.style.display = 'none';
+            classicBetLabel.style.display = 'none';
+            mergeLabel.style.display = 'flex';
+        }
+    }
 
     function showPage(pageId) {
         const pages = ['login-page', 'register-page', 'lobby-page', 'create-room-page', 'room-page', 'game-page'];
@@ -147,17 +170,28 @@ document.addEventListener('DOMContentLoaded', (event) => {
         });
     }
     
+    // 【修改】創建房間時，根據遊戲模式傳送不同資料
     function createRoom() {
+        const gameMode = document.getElementById('room-game-mode').value;
         const isPublic = document.getElementById('room-public').value === 'true';
+
         const room = {
             name: document.getElementById('room-name').value || `玩家 ${currentUser} 的房間`,
             isPublic: isPublic,
             password: isPublic ? (document.getElementById('room-password').value || null) : null,
             limit: parseInt(document.getElementById('room-limit').value),
-            feedTime: parseInt(document.getElementById('feed-time').value),
-            betTime: parseInt(document.getElementById('bet-time').value),
-            status: 'open'
+            status: 'open',
+            gameMode: gameMode, // 新增遊戲模式
         };
+
+        if (gameMode === 'classic') {
+            room.feedTime = parseInt(document.getElementById('feed-time').value, 10);
+            room.betTime = parseInt(document.getElementById('bet-time').value, 10);
+        } else if (gameMode === 'merge') {
+            const gameTimeInput = document.getElementById('room-game-time').value;
+            // 如果有輸入時間，轉換為秒；否則設為 0 代表無限時
+            room.gameTime = gameTimeInput ? parseInt(gameTimeInput, 10) * 60 : 0;
+        }
 
         if (!isPublic && !room.password) {
             room.password = prompt("您正在創建私人房間，請為您的房間設定一個密碼：");
@@ -254,10 +288,18 @@ document.addEventListener('DOMContentLoaded', (event) => {
         loadRoomList();
     }
     
-    function handleGameStart() {
+    function handleGameStart(gameData) {
         console.log("處理遊戲開始...");
         showPage('game-page');
         Game.init();
+        
+        // 如果計時器資料是 null 或 0，則顯示無限時
+        if (!gameData || !gameData.initialTime || gameData.initialTime <= 0) {
+            document.getElementById('game-timer').textContent = "∞";
+        } else {
+            Game.updateTimer(gameData.initialTime);
+        }
+
         scoreUpdateInterval = setInterval(() => {
             if (isSocketConnected) {
                 socket.emit('updateScore', { score: Game.getScore() });
@@ -347,7 +389,9 @@ document.addEventListener('DOMContentLoaded', (event) => {
                 roomDiv.id = `room-${id}`;
                 let headerHTML = (room.password) ? '<span>🔑 </span>' : '';
                 headerHTML += room.name;
-                roomDiv.innerHTML = `<div class="room-item-header">${headerHTML}</div><div class="room-item-players">房主: ${room.owner} | 人數: ${room.players.length}/${room.limit || '∞'}</div><div class="room-item-actions"><button class="join-btn">加入</button>${isAdmin ? `<button class="admin-close-btn">關閉</button>` : ''}</div>`;
+                // 【新增】顯示遊戲模式
+                const gameModeText = room.gameMode === 'merge' ? '鬥靈合成' : '經典鬥靈';
+                roomDiv.innerHTML = `<div class="room-item-header">${headerHTML}</div><div style="font-size: 0.8em; color: #ffc107; margin-bottom: 5px;">模式: ${gameModeText}</div><div class="room-item-players">房主: ${room.owner} | 人數: ${room.players.length}/${room.limit || '∞'}</div><div class="room-item-actions"><button class="join-btn">加入</button>${isAdmin ? `<button class="admin-close-btn">關閉</button>` : ''}</div>`;
                 
                 roomDiv.querySelector('.join-btn').addEventListener('click', () => {
                     if (room.password) {

@@ -24,7 +24,7 @@
         <h1>註冊帳號</h1>
         <div class="form-group"><input type="text" id="register-username" placeholder="帳號名（可中文）"></div>
         <div class="form-group"><input type="password" id="register-password" placeholder="密碼"></div>
-        <div class.form-group"><input type="password" id="register-confirm-password" placeholder="確認密碼"></div>
+        <div class="form-group"><input type="password" id="register-confirm-password" placeholder="確認密碼"></div>
         <div class="button-group register-buttons">
             <button id="back-to-login">返回</button>
             <button id="register-submit">確認註冊</button>
@@ -55,8 +55,17 @@
         <label>是否開放：<select id="room-public"><option value="true">是</option><option value="false">否</option></select></label>
         <input type="password" id="room-password" placeholder="房間密碼（可選）">
         <label>人數限制：<select id="room-limit"><option value="0">無限制</option><option value="30">30</option><option value="20">20</option><option value="10">10</option><option value="5">5</option></select></label>
-        <label>投餵道具時間：<select id="feed-time"><option value="10">10秒</option><option value="20">20秒</option><option value="30">30秒</option><option value="60">1分</option><option value="120">2分</option><option value="300">5分</option><option value="600">10分</option></select></label>
-        <label>下注時間：<select id="bet-time"><option value="10">10秒</option><option value="20">20秒</option><option value="30">30秒</option><option value="60">1分</option><option value="120">2分</option><option value="300">5分</option><option value="600">10分</option></select></label>
+        
+        <label>遊戲模式：<select id="room-game-mode">
+            <option value="classic">經典鬥靈</option>
+            <option value="merge" selected>鬥靈合成</option>
+        </select></label>
+        
+        <label id="game-time-merge-label">遊戲時間(分)：<input type="number" id="room-game-time" placeholder="留空則無限制" min="1"></label>
+        
+        <label id="game-time-classic-feed-label">投餵道具時間：<select id="feed-time"><option value="10">10秒</option><option value="20">20秒</option><option value="30">30秒</option><option value="60">1分</option><option value="120">2分</option><option value="300">5分</option><option value="600">10分</option></select></label>
+        <label id="game-time-classic-bet-label">下注時間：<select id="bet-time"><option value="10">10秒</option><option value="20">20秒</option><option value="30">30秒</option><option value="60">1分</option><option value="120">2分</option><option value="300">5分</option><option value="600">10分</option></select></label>
+        
         <div><button id="cancel-create">取消創建</button><button id="confirm-create">確定創建</button></div>
     </div>
 
@@ -94,7 +103,7 @@
         </div>
         <div class="sidebar" id="game-sidebar">
             <h3>遊戲時間</h3>
-            <div id="game-timer">02:00</div>
+            <div id="game-timer">--:--</div>
             <h2>即時分數</h2>
             <div id="scoreboard-list">
                 </div>
