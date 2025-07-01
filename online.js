@@ -1,4 +1,4 @@
-// --- 線上鬥靈功能 (V3.3 - 頁面管理重構版) ---
+// --- 線上鬥靈功能 (V3.4 - 修正頁面管理 Bug) ---
 
 // Socket.IO 連線
 const socket = io('https://fog-erratic-paw.glitch.me', { auth: {} }); 
@@ -8,9 +8,9 @@ let isAdmin = false;
 let currentRoomId = null;
 let currentRoomOwner = null; 
 
-// 將所有主要頁面容器的ID存成陣列，方便管理
-const pageIds = ['login-page', 'register-page', 'lobby-page', 'create-room-page', 'room-page', 'game-page'];
-const loadingPopup = document.getElementById('loading-popup');
+// 將所有需要被統一管理的頁面容器的ID存成陣列
+// --- 修正：將 loading-popup 加入到管理列表！ ---
+const pageIds = ['loading-popup', 'login-page', 'register-page', 'lobby-page', 'create-room-page', 'room-page', 'game-page'];
 
 /**
  * 新增：一個專門用來切換頁面的函式
@@ -24,12 +24,15 @@ function showPage(pageIdToShow) {
             page.style.display = 'none';
         }
     });
+
     // 然後只顯示指定的頁面
     const targetPage = document.getElementById(pageIdToShow);
     if (targetPage) {
-        targetPage.style.display = 'block'; // 使用 block 或 flex 取決於頁面佈局
-        if (targetPage.classList.contains('page-layout')) {
+        // 根據頁面的佈局需求，使用 block 或 flex
+        if (targetPage.classList.contains('page-layout') || targetPage.classList.contains('loading-container') || id === 'login-page' || id === 'register-page') {
              targetPage.style.display = 'flex';
+        } else {
+             targetPage.style.display = 'block';
         }
     }
 }
@@ -37,19 +40,15 @@ function showPage(pageIdToShow) {
 
 document.addEventListener('DOMContentLoaded', (event) => {
 
-    // 初始狀態下，所有頁面都應該是隱藏的，除了載入畫面
-    pageIds.forEach(id => {
-        const page = document.getElementById(id);
-        if (page) page.style.display = 'none';
-    });
-    loadingPopup.style.display = 'flex';
+    // 初始狀態下，顯示載入畫面
+    showPage('loading-popup');
     
     // Socket.IO 連線事件監聽器
     socket.on('connect', () => {
         console.log('成功連接到伺服器！ID:', socket.id);
         isSocketConnected = true;
         if (!currentUser) {
-            loadingPopup.style.display = 'none'; 
+            // 連線成功後，顯示登入頁面
             showPage('login-page');
         }
     });
@@ -69,7 +68,7 @@ document.addEventListener('DOMContentLoaded', (event) => {
             window.location.reload();
         } else {
             console.error('連線錯誤:', err.message);
-            loadingPopup.style.display = 'none'; 
+            showPage('login-page'); // 即使連線失敗，也要顯示登入頁，而不是卡住
             alert(`無法連接到伺服器，請確認伺服器狀態或稍後再試。\n錯誤訊息: ${err.message}`);
         }
     });
@@ -274,7 +273,6 @@ document.addEventListener('DOMContentLoaded', (event) => {
     });
 
     // ================== 功能函式 ==================
-    // ... 其他功能函式保持不變 ...
     function tryJoinRoom(roomId, password) {
         socket.emit('joinRoom', { roomId, password }, (response) => {
             if (response.success) {
@@ -385,7 +383,7 @@ document.addEventListener('DOMContentLoaded', (event) => {
                 currentRoomOwner = room.owner;
                 document.getElementById('room-title').textContent = room.name;
                 document.getElementById('room-id-display').textContent = `房號: ${roomId}`;
-                document.getElementById('start-game').style.display = room.owner === currentUser ? 'block' : 'none';
+                document.getElementById('start-game').style.display = 'block';
                 updateInRoomPlayerList(room.players);
             } else {
                 alert('無法獲取房間資訊，可能已被關閉。');
