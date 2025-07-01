@@ -13,6 +13,7 @@ const Game = {
         gameLoopInterval: null,
         uniqueIdCounter: 0,
         isGameActive: false,
+        eventListenersAttached: false, // 【新增】旗標，用於確認事件監聽器是否已附加
     },
 
     // DOM 元素快取
@@ -24,8 +25,14 @@ const Game = {
         this.cacheDOMElements();
         this.resetState();
         this.renderInitialUI();
-        this.setupEventListeners();
-        this.state.gameLoopInterval = setInterval(this.gameLoop.bind(this), 1000); // 每秒執行一次遊戲循環
+
+        // 【修改】只有在事件監聽器從未被附加過的情況下，才執行 setupEventListeners
+        if (!this.state.eventListenersAttached) {
+            this.setupEventListeners();
+            this.state.eventListenersAttached = true; // 將旗標設為 true，確保不再重複執行
+        }
+
+        this.state.gameLoopInterval = setInterval(this.gameLoop.bind(this), 1000);
         this.state.isGameActive = true;
     },
     
@@ -43,6 +50,10 @@ const Game = {
         if (this.state.gameLoopInterval) {
             clearInterval(this.state.gameLoopInterval);
             this.state.gameLoopInterval = null;
+        }
+        // 重置時啟用購買按鈕
+        if(this.elements.buyButton) {
+            this.elements.buyButton.disabled = false;
         }
     },
 
@@ -68,6 +79,7 @@ const Game = {
     
     // 更新頂部狀態 UI
     updateStatsUI() {
+        if (!this.elements.goldDisplay) return;
         this.elements.goldDisplay.textContent = this.state.gold;
         this.elements.gridLevelDisplay.textContent = this.state.gridLevel;
         const xpPercentage = (this.state.currentXP / this.state.xpToNextLevel) * 100;
@@ -77,6 +89,7 @@ const Game = {
 
     // 渲染整個遊戲格子
     renderGrid() {
+        if (!this.elements.gameGrid) return;
         this.elements.gameGrid.innerHTML = '';
         this.elements.gameGrid.style.gridTemplateColumns = `repeat(${this.state.gridSize}, 1fr)`;
         this.elements.gameGrid.style.gridTemplateRows = `repeat(${this.state.gridSize}, 1fr)`;
@@ -99,7 +112,7 @@ const Game = {
     createCharacterElement(characterData) {
         const characterDiv = document.createElement('div');
         characterDiv.className = 'character';
-        characterDiv.draggable = this.state.isGameActive; // 遊戲結束後不可拖動
+        characterDiv.draggable = this.state.isGameActive;
         characterDiv.id = characterData.id;
         characterDiv.dataset.level = characterData.level;
         
@@ -113,12 +126,13 @@ const Game = {
     
     // 根據等級獲取圖片路徑
     getCharacterImage(level) {
-        const imageNumber = 34 - level; // 等級1對應033.png, 等級33對應001.png
+        const imageNumber = 34 - level;
         return `images/${String(imageNumber).padStart(3, '0')}.png`;
     },
 
     // 設定事件監聽器
     setupEventListeners() {
+        if (!this.elements.buyButton || !this.elements.gameGrid) return;
         this.elements.buyButton.addEventListener('click', this.handleBuy.bind(this));
 
         let dragSrcElement = null;
@@ -282,26 +296,35 @@ const Game = {
         }
     },
 
-    // === 新增：由 online.js 呼叫的函式 ===
     getScore() {
         return this.state.gold;
     },
 
     updateTimer(timeLeft) {
+        if (!this.elements.gameTimer) return;
+        if (timeLeft < 0) timeLeft = 0;
         const minutes = Math.floor(timeLeft / 60);
         const seconds = timeLeft % 60;
         this.elements.gameTimer.textContent = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
     },
 
     updateScoreboard(scores = []) {
+        if (!this.elements.scoreboardList) return;
         this.elements.scoreboardList.innerHTML = '';
         scores.forEach((player, index) => {
             const scoreItem = document.createElement('div');
             scoreItem.className = 'score-item';
+            
+            let scoreText = player.score;
+            if (player.hasLeft) {
+                scoreText += ' (已離開)';
+                scoreItem.style.opacity = '0.6';
+            }
+
             scoreItem.innerHTML = `
                 <span class="rank">${index + 1}.</span>
                 <span class="name">${player.username}</span>
-                <span class="score">${player.score}</span>
+                <span class="score">${scoreText}</span>
             `;
             this.elements.scoreboardList.appendChild(scoreItem);
         });
@@ -309,24 +332,37 @@ const Game = {
 
     endGame(finalScores) {
         this.state.isGameActive = false;
-        clearInterval(this.state.gameLoopInterval);
-        this.state.gameLoopInterval = null;
-        this.elements.buyButton.disabled = true; // 禁用購買按鈕
+        if (this.state.gameLoopInterval) {
+            clearInterval(this.state.gameLoopInterval);
+            this.state.gameLoopInterval = null;
+        }
+        if (this.elements.buyButton) {
+            this.elements.buyButton.disabled = true;
+        }
 
-        // 渲染最終排名
-        this.elements.finalRankings.innerHTML = '';
-        finalScores.forEach((player, index) => {
-            const scoreItem = document.createElement('div');
-            scoreItem.className = 'score-item';
-            scoreItem.innerHTML = `
-                <span class="rank">${index + 1}.</span>
-                <span class="name">${player.username}</span>
-                <span class="score">${player.score}</span>
-            `;
-            this.elements.finalRankings.appendChild(scoreItem);
-        });
+        if (this.elements.finalRankings) {
+            this.elements.finalRankings.innerHTML = '';
+            finalScores.forEach((player, index) => {
+                const scoreItem = document.createElement('div');
+                scoreItem.className = 'score-item';
+                
+                let scoreText = player.score;
+                if (player.hasLeft) {
+                    scoreText += ' (已離開)';
+                    scoreItem.style.opacity = '0.6';
+                }
+
+                scoreItem.innerHTML = `
+                    <span class="rank">${index + 1}.</span>
+                    <span class="name">${player.username}</span>
+                    <span class="score">${scoreText}</span>
+                `;
+                this.elements.finalRankings.appendChild(scoreItem);
+            });
+        }
         
-        // 顯示彈出視窗
-        this.elements.resultsPopup.style.display = 'flex';
+        if (this.elements.resultsPopup) {
+            this.elements.resultsPopup.style.display = 'flex';
+        }
     }
 };
