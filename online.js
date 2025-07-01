@@ -490,7 +490,7 @@ document.addEventListener('DOMContentLoaded', (event) => {
         // 根據等級獲取圖片路徑
         getCharacterImage(level) {
             const imageNumber = 34 - level; // 等級1對應033.png, 等級33對應001.png
-            return `${String(imageNumber).padStart(3, '0')}.png`;
+            return `images/${String(imageNumber).padStart(3, '0')}.png`; // [修正] 新增 images/ 路徑
         },
     
         // 設定事件監聽器
