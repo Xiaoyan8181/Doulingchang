@@ -37,7 +37,7 @@
 
 /* --- 合成遊戲頁面樣式 --- */
 #game-page .main-content { display: flex; flex-direction: column; align-items: center; gap: 15px; }
-#game-stats { display: flex; justify-content: space-around; align-items: center; width: 100%; max-width: 500px; background-color: #333; padding: 10px; border-radius: 8px; box-sizing: border-box; }
+#game-stats { display: flex; justify-content: space-around; align-items: center; width: 100%; max-width: 600px; background-color: #333; padding: 10px; border-radius: 8px; box-sizing: border-box; flex-wrap: wrap; }
 #xp-bar-container { width: 150px; background-color: #555; border-radius: 5px; position: relative; text-align: center; height: 24px; line-height: 24px; }
 #xp-bar-fill { height: 100%; width: 0%; background-color: #4CAF50; border-radius: 5px; position: absolute; top: 0; left: 0; transition: width 0.3s; }
 #xp-text { position: relative; z-index: 1; color: white; font-size: 14px; }
@@ -60,28 +60,26 @@
 .score-item .score { font-weight: bold; color: #4CAF50; }
 
 /* --- 新增：遊戲結束彈窗樣式 --- */
-.results-box {
-    background-color: #333;
-    padding: 20px 40px;
-    border-radius: 10px;
-    border: 1px solid #555;
-    text-align: center;
-    color: #fff;
-    width: 90%;
-    max-width: 400px;
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
+.results-box { background-color: #333; padding: 20px 40px; border-radius: 10px; border: 1px solid #555; text-align: center; color: #fff; width: 90%; max-width: 400px; display: flex; flex-direction: column; gap: 15px; }
+#final-rankings { width: 100%; max-height: 50vh; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
+#back-to-room-btn { padding: 10px 20px; font-size: 16px; }
+
+/* 【新增】合併時的金色閃光動畫 */
+@keyframes gold-flash-animation {
+  0% {
+    background-color: transparent;
+    box-shadow: none;
+  }
+  50% {
+    background-color: rgba(255, 215, 0, 0.6);
+    box-shadow: 0 0 20px 8px rgba(255, 215, 0, 0.5);
+  }
+  100% {
+    background-color: transparent;
+    box-shadow: none;
+  }
 }
-#final-rankings {
-    width: 100%;
-    max-height: 50vh;
-    overflow-y: auto;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-}
-#back-to-room-btn {
-    padding: 10px 20px;
-    font-size: 16px;
+
+.grid-cell.merge-flash {
+  animation: gold-flash-animation 0.4s ease-out;
 }

@@ -8,14 +8,14 @@ const Game = {
         currentXP: 0,
         xpToNextLevel: 10,
         gridSize: 3,
-        grid: [], // 儲存格子的數據
+        grid: [],
         charactersOnBoard: 0,
         gameLoopInterval: null,
         uniqueIdCounter: 0,
         isGameActive: false,
         eventListenersAttached: false,
         buyCount: 0,
-        goldSpent: 0, // 【新增】用於記錄總花費
+        goldSpent: 0,
     },
 
     // DOM 元素快取
@@ -49,7 +49,7 @@ const Game = {
         this.state.uniqueIdCounter = 0;
         this.state.isGameActive = false;
         this.state.buyCount = 0;
-        this.state.goldSpent = 0; // 【修改】重置總花費
+        this.state.goldSpent = 0;
         if (this.state.gameLoopInterval) {
             clearInterval(this.state.gameLoopInterval);
             this.state.gameLoopInterval = null;
@@ -63,7 +63,7 @@ const Game = {
     cacheDOMElements() {
         this.elements.goldDisplay = document.getElementById('gold-display');
         this.elements.gridLevelDisplay = document.getElementById('grid-level-display');
-        this.elements.incomeRateDisplay = document.getElementById('income-rate-display'); // 【新增】快取產出速率的元素
+        this.elements.incomeRateDisplay = document.getElementById('income-rate-display');
         this.elements.xpBar = document.getElementById('xp-bar-fill');
         this.elements.xpText = document.getElementById('xp-text');
         this.elements.gameGrid = document.getElementById('game-grid');
@@ -79,7 +79,7 @@ const Game = {
         this.updateStatsUI();
         this.renderGrid();
         this.updateBuyButtonText();
-        this.updateIncomeRateDisplay(); // 【新增】初始化產出速率顯示
+        this.updateIncomeRateDisplay();
     },
     
     // 更新頂部狀態 UI
@@ -103,7 +103,7 @@ const Game = {
         }
     },
 
-    // 【新增】更新每秒產出顯示
+    // 更新每秒產出顯示
     updateIncomeRateDisplay() {
         if (!this.elements.incomeRateDisplay) return;
         let currentIncome = 0;
@@ -203,7 +203,7 @@ const Game = {
         }
 
         this.state.gold -= cost;
-        this.state.goldSpent += cost; // 【修改】記錄花費
+        this.state.goldSpent += cost;
         this.state.buyCount++;
         
         let emptyCells = [];
@@ -221,7 +221,7 @@ const Game = {
         this.updateStatsUI();
         this.renderGrid();
         this.updateBuyButtonText();
-        this.updateIncomeRateDisplay(); // 【新增】購買後更新產出顯示
+        this.updateIncomeRateDisplay();
     },
 
     handleDrop(draggedElement, dropTarget) {
@@ -231,18 +231,28 @@ const Game = {
         const destIndex = parseInt(destCell.dataset.index, 10);
         const srcChar = this.state.grid[srcIndex];
         const destChar = this.state.grid[destIndex];
+
         if (srcIndex === destIndex) return;
+
         if (destChar && srcChar.level === destChar.level && srcChar.level < 33) {
             const newLevel = srcChar.level + 1;
             this.state.grid[destIndex].level = newLevel;
             this.state.grid[srcIndex] = null;
             this.state.charactersOnBoard--;
             this.addXP(newLevel);
+            
+            // 【新增】觸發合併閃光效果
+            destCell.classList.add('merge-flash');
+            setTimeout(() => {
+                destCell.classList.remove('merge-flash');
+            }, 400); // 移除 class 的時間應與 CSS 動畫時間匹配
+
         } else {
             [this.state.grid[srcIndex], this.state.grid[destIndex]] = [this.state.grid[destIndex], this.state.grid[srcIndex]];
         }
+        
         this.renderGrid();
-        this.updateIncomeRateDisplay(); // 【新增】拖曳合成後更新產出顯示
+        this.updateIncomeRateDisplay();
     },
     
     addXP(amount) {
@@ -287,7 +297,6 @@ const Game = {
         }
     },
 
-    // 【重大修改】計分方式
     getScore() {
         let totalCharacterValue = 0;
         this.state.grid.forEach(char => {
@@ -295,7 +304,6 @@ const Game = {
                 totalCharacterValue += Math.pow(char.level, 2) - 1;
             }
         });
-        // 總分 = 當前金幣 + 角色總價值 + 總花費
         return this.state.gold + totalCharacterValue + this.state.goldSpent;
     },
 
